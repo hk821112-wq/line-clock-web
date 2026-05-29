@@ -386,14 +386,17 @@
             setButtons(true);
 
             if (res.ok) {
-              setStatus(
-                res.message + '\n\n' +
-                '姓名：' + res.name + '\n' +
-                '分店：' + res.store + '\n' +
-                '日期：' + res.date + '\n' +
-                '時間：' + res.time
-              );
-            } else {
+  setStatus(
+    res.message + '\n\n' +
+    '姓名：' + res.name + '\n' +
+    '分店：' + res.store + '\n' +
+    '日期：' + res.date + '\n' +
+    '時間：' + res.time + '\n\n' +
+    '畫面即將自動關閉...'
+  );
+
+  closeLiffAfterSuccess();
+} else {
               if (String(res.message || '').includes('尚未綁定')) {
                 showBindRequired(type);
               } else {
@@ -478,12 +481,24 @@
     }
 
     function setButtons(enabled) {
-      const buttons = document.querySelectorAll('button');
+  const buttons = document.querySelectorAll('button');
 
-      buttons.forEach(function (btn) {
-        btn.disabled = !enabled;
-      });
+  buttons.forEach(function (btn) {
+    btn.disabled = !enabled;
+  });
+}
+
+function closeLiffAfterSuccess() {
+  setTimeout(function () {
+    try {
+      if (typeof liff !== 'undefined' && liff.isInClient()) {
+        liff.closeWindow();
+      }
+    } catch (err) {
+      console.log('LIFF 自動關閉失敗：', err);
     }
+  }, 300);
+}
   </script>
 </body>
 </html>
