@@ -448,10 +448,15 @@
       };
 
       script.onerror = function () {
-        cleanup();
-        setButtons(true);
-        setStatus('無法連接 Google Apps Script API');
-      };
+  cleanup();
+  setButtons(true);
+  setStatus(
+    '無法連接 Google Apps Script API\n\n' +
+    '目前連線網址：\n' +
+    script.src + '\n\n' +
+    '請確認 GitHub Pages 是否已更新到新版'
+  );
+};
 
       function cleanup() {
         clearTimeout(timer);
