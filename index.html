@@ -434,7 +434,7 @@
         .join('&');
 
       const script = document.createElement('script');
-      script.src = GAS_URL + '?' + query;
+      script.src = API_URL + '?' + query;
 
       let timer = setTimeout(function () {
         cleanup();
