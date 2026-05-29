@@ -250,13 +250,22 @@
         return;
       }
 
-      if (action === 'breakEnd') {
-        sendClock('休息結束');
-        return;
-      }
+if (action === 'breakEnd') {
+  sendClock('休息結束');
+  return;
+}
 
-      document.getElementById('homeBox').classList.remove('hidden');
+if (action === 'monthRecords') {
+  getMonthRecords();
+  return;
+}
 
+if (action === 'historyRecords') {
+  getHistoryRecords();
+  return;
+}
+
+document.getElementById('homeBox').classList.remove('hidden');
       setStatus(
         'LINE 身分取得成功\n' +
         'LINE 名稱：' + lineDisplayName + '\n\n' +
@@ -428,6 +437,76 @@
       );
     }
 
+function getMonthRecords() {
+  if (!lineUserId) {
+    setStatus('尚未取得 LINE userId，請重新開啟頁面');
+    return;
+  }
+
+  hideAllBoxes();
+  setButtons(false);
+  setStatus('正在查詢本月打卡紀錄...');
+
+  apiCall({
+    action: 'getMonthRecords',
+    userId: lineUserId
+  }, function (res) {
+    setButtons(true);
+
+    if (!res.ok) {
+      setStatus(res.message || '查詢本月紀錄失敗');
+      return;
+    }
+
+    setStatus(formatRecordsText('本月打卡紀錄', res.records));
+  });
+}
+
+function getHistoryRecords() {
+  if (!lineUserId) {
+    setStatus('尚未取得 LINE userId，請重新開啟頁面');
+    return;
+  }
+
+  hideAllBoxes();
+  setButtons(false);
+  setStatus('正在查詢歷史打卡紀錄...');
+
+  apiCall({
+    action: 'getHistoryRecords',
+    userId: lineUserId
+  }, function (res) {
+    setButtons(true);
+
+    if (!res.ok) {
+      setStatus(res.message || '查詢歷史紀錄失敗');
+      return;
+    }
+
+    setStatus(formatRecordsText('歷史打卡紀錄', res.records));
+  });
+}
+
+function formatRecordsText(title, records) {
+  if (!records || records.length === 0) {
+    return title + '\n\n目前沒有紀錄';
+  }
+
+  let text = title + '\n\n';
+
+  records.forEach(function (r, index) {
+    text +=
+      (index + 1) + '. ' +
+      r.date + ' ' +
+      r.type + '\n' +
+      '分店：' + r.store + '\n' +
+      '時間：' + r.time + '\n' +
+      '狀態：' + r.result + '\n\n';
+  });
+
+  return text.trim();
+}
+
     function apiCall(params, callback) {
       const cbName = 'jsonpCallback_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
 
@@ -497,7 +576,7 @@ function closeLiffAfterSuccess() {
     } catch (err) {
       console.log('LIFF 自動關閉失敗：', err);
     }
-  }, 100);
+  }, 300);
 }
   </script>
 </body>
