@@ -198,6 +198,14 @@
           withLoginOnExternalBrowser: true
         });
 
+setStatus(
+  'LIFF 測試\n' +
+  'isInClient：' + liff.isInClient() + '\n' +
+  'LINE版本：' + liff.getLineVersion() + '\n' +
+  'LIFF版本：' + liff.getVersion() + '\n\n' +
+  '如果 isInClient 是 false，就無法自動關閉。'
+);
+
         if (!liff.isLoggedIn()) {
           setStatus('尚未登入 LINE，正在前往登入...');
           liff.login();
