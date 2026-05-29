@@ -4,108 +4,205 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>員工打卡系統</title>
+  <title>小時候打卡系統</title>
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      padding: 20px;
+      padding: 0;
       font-family: "Microsoft JhengHei", Arial, sans-serif;
-      background: #f3f5f7;
+      background: linear-gradient(180deg, #f4f7fb 0%, #eef2f7 100%);
       color: #222;
     }
 
-    .card {
-      max-width: 460px;
-      margin: 30px auto;
-      background: white;
-      border-radius: 18px;
-      padding: 22px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    .wrap {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 18px;
     }
 
-    h1 {
+    .header {
       text-align: center;
-      font-size: 26px;
-      margin-bottom: 8px;
+      padding: 18px 0 10px;
     }
 
-    .sub {
-      text-align: center;
+    .brand {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 14px;
       color: #666;
-      margin-bottom: 18px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 22px;
+      padding: 20px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+      margin-bottom: 16px;
     }
 
     .status {
-      background: #f7f7f7;
-      border-radius: 12px;
-      padding: 14px;
+      background: #f6f7f9;
+      border-radius: 16px;
+      padding: 16px;
+      font-size: 15px;
       line-height: 1.8;
       white-space: pre-line;
       word-break: break-word;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
+      color: #333;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #555;
+      margin: 8px 0 10px;
     }
 
     input {
       width: 100%;
-      box-sizing: border-box;
-      padding: 14px;
-      border-radius: 12px;
+      padding: 15px;
+      border-radius: 14px;
       border: 1px solid #ddd;
       font-size: 16px;
       margin-bottom: 10px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #06C755;
+      box-shadow: 0 0 0 3px rgba(6, 199, 85, 0.12);
     }
 
     button {
       width: 100%;
       border: none;
-      border-radius: 14px;
-      padding: 15px;
+      border-radius: 16px;
+      padding: 16px;
       margin: 7px 0;
       font-size: 17px;
-      font-weight: bold;
-      color: white;
+      font-weight: 800;
+      color: #fff;
+      background: #06C755;
+      cursor: pointer;
+    }
+
+    button:active {
+      transform: scale(0.99);
+    }
+
+    button:disabled {
+      background: #aaa !important;
+      cursor: not-allowed;
+    }
+
+    .btn-in {
       background: #06C755;
     }
 
-    .break {
-      background: #2d8cff;
-    }
-
-    .off {
+    .btn-out {
       background: #ff6b35;
     }
 
-    .secondary {
+    .btn-break {
+      background: #2d8cff;
+    }
+
+    .btn-query {
       background: #333;
+    }
+
+    .btn-bind {
+      background: #7b61ff;
     }
 
     .hidden {
       display: none;
     }
+
+    .tips {
+      font-size: 13px;
+      color: #777;
+      line-height: 1.6;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      color: #999;
+      margin-top: 12px;
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .quick-grid button {
+      margin: 0;
+    }
   </style>
 </head>
 
 <body>
-  <div class="card">
-    <h1>員工打卡系統</h1>
-    <div class="sub">小時候彈珠堂</div>
-
-    <div id="status" class="status">頁面載入中...</div>
-
-    <div id="bindBox" class="hidden">
-      <input id="employeeId" type="text" placeholder="請輸入員工ID，例如 E001">
-      <button onclick="bindEmployee()">綁定員工資料</button>
+  <div class="wrap">
+    <div class="header">
+      <div class="brand">小時候打卡系統</div>
+      <div class="subtitle">員工上下班・休息紀錄・資料查詢</div>
     </div>
 
-    <div id="clockBox" class="hidden">
-      <button onclick="sendClock('上班打卡')">上班打卡</button>
-      <button class="break" onclick="sendClock('休息開始')">休息開始</button>
-      <button class="break" onclick="sendClock('休息結束')">休息結束</button>
-      <button class="off" onclick="sendClock('下班打卡')">下班打卡</button>
-      <button class="secondary" onclick="getToday()">查看今日紀錄</button>
+    <div class="card">
+      <div id="status" class="status">系統載入中...</div>
+
+      <div id="bindBox" class="hidden">
+        <div class="section-title">第一次使用｜綁定員工ID</div>
+        <input id="employeeId" type="text" placeholder="請輸入員工ID，例如 LH001">
+        <button class="btn-bind" onclick="bindEmployee()">綁定員工資料</button>
+      </div>
+
+      <div id="clockBox" class="hidden">
+        <div class="section-title">快速打卡</div>
+        <div class="quick-grid">
+          <button class="btn-in" onclick="sendClock('上班打卡')">上班</button>
+          <button class="btn-out" onclick="sendClock('下班打卡')">下班</button>
+        </div>
+        <button class="btn-break" onclick="showBreakBox()">休息開始 / 結束</button>
+        <button class="btn-query" onclick="showQueryBox()">資料查詢</button>
+      </div>
+
+      <div id="breakBox" class="hidden">
+        <div class="section-title">休息打卡</div>
+        <button class="btn-break" onclick="sendClock('休息開始')">休息開始</button>
+        <button class="btn-break" onclick="sendClock('休息結束')">休息結束</button>
+      </div>
+
+      <div id="queryBox" class="hidden">
+        <div class="section-title">資料查詢</div>
+        <button class="btn-query" onclick="getToday()">查看今日紀錄</button>
+      </div>
+
+      <div class="tips">
+        打卡時會使用手機定位確認是否在分店範圍內
+      </div>
+    </div>
+
+    <div class="footer">
+      LIFF ID：2010226307-AZeYYFbb
     </div>
   </div>
 
@@ -118,11 +215,11 @@
     let lineDisplayName = '';
 
     window.onload = async function () {
-      setStatus('GitHub Pages 已載入\n正在初始化 LIFF...');
+      setStatus('正在啟動打卡系統...');
 
       try {
         if (typeof liff === 'undefined') {
-          setStatus('LIFF SDK 載入失敗');
+          setStatus('LIFF SDK 載入失敗，請重新開啟 LINE');
           return;
         }
 
@@ -132,7 +229,7 @@
         });
 
         if (!liff.isLoggedIn()) {
-          setStatus('尚未登入 LINE，正在登入...');
+          setStatus('尚未登入 LINE，正在前往登入...');
           liff.login();
           return;
         }
@@ -142,19 +239,122 @@
         lineUserId = profile.userId;
         lineDisplayName = profile.displayName;
 
-        setStatus(
-          'LINE 身分取得成功\n' +
-          'LINE 名稱：' + lineDisplayName + '\n\n' +
-          '請輸入員工ID綁定，或直接打卡'
-        );
-
-        document.getElementById('bindBox').classList.remove('hidden');
-        document.getElementById('clockBox').classList.remove('hidden');
+        handleRoute();
 
       } catch (err) {
-        setStatus('LIFF 初始化失敗：' + err.message);
+        setStatus(
+          '初始化失敗\n\n' +
+          '錯誤訊息：' + err.message + '\n\n' +
+          '請確認 LIFF Endpoint URL 是否正確'
+        );
       }
     };
+
+    function getUrlParam(name) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name);
+    }
+
+    function hideAllBoxes() {
+      document.getElementById('bindBox').classList.add('hidden');
+      document.getElementById('clockBox').classList.add('hidden');
+      document.getElementById('breakBox').classList.add('hidden');
+      document.getElementById('queryBox').classList.add('hidden');
+    }
+
+    function handleRoute() {
+      const mode = getUrlParam('mode');
+      const action = getUrlParam('action');
+
+      hideAllBoxes();
+
+      if (mode === 'bind') {
+        document.getElementById('bindBox').classList.remove('hidden');
+
+        setStatus(
+          '第一次使用請先綁定員工ID\n\n' +
+          'LINE 名稱：' + lineDisplayName + '\n\n' +
+          '請輸入管理員給你的員工ID'
+        );
+        return;
+      }
+
+      if (action === 'workIn') {
+        setStatus(
+          'LINE 名稱：' + lineDisplayName + '\n\n' +
+          '準備執行上班打卡...'
+        );
+
+        setTimeout(function () {
+          sendClock('上班打卡');
+        }, 800);
+        return;
+      }
+
+      if (action === 'workOut') {
+        setStatus(
+          'LINE 名稱：' + lineDisplayName + '\n\n' +
+          '準備執行下班打卡...'
+        );
+
+        setTimeout(function () {
+          sendClock('下班打卡');
+        }, 800);
+        return;
+      }
+
+      if (mode === 'break') {
+        document.getElementById('breakBox').classList.remove('hidden');
+
+        setStatus(
+          '休息打卡\n\n' +
+          'LINE 名稱：' + lineDisplayName + '\n\n' +
+          '請選擇休息開始或休息結束'
+        );
+        return;
+      }
+
+      if (mode === 'query') {
+        document.getElementById('queryBox').classList.remove('hidden');
+
+        setStatus(
+          '資料查詢\n\n' +
+          'LINE 名稱：' + lineDisplayName + '\n\n' +
+          '目前可查詢今日打卡紀錄'
+        );
+        return;
+      }
+
+      document.getElementById('bindBox').classList.remove('hidden');
+      document.getElementById('clockBox').classList.remove('hidden');
+
+      setStatus(
+        'LINE 身分取得成功\n' +
+        'LINE 名稱：' + lineDisplayName + '\n\n' +
+        '請選擇打卡功能\n\n' +
+        '第一次使用請先綁定員工ID'
+      );
+    }
+
+    function showBreakBox() {
+      hideAllBoxes();
+      document.getElementById('breakBox').classList.remove('hidden');
+
+      setStatus(
+        '休息打卡\n\n' +
+        '請選擇休息開始或休息結束'
+      );
+    }
+
+    function showQueryBox() {
+      hideAllBoxes();
+      document.getElementById('queryBox').classList.remove('hidden');
+
+      setStatus(
+        '資料查詢\n\n' +
+        '目前可查詢今日打卡紀錄'
+      );
+    }
 
     function bindEmployee() {
       const employeeId = document.getElementById('employeeId').value.trim();
@@ -164,6 +364,12 @@
         return;
       }
 
+      if (!lineUserId) {
+        setStatus('尚未取得 LINE userId，請重新開啟頁面');
+        return;
+      }
+
+      setButtons(false);
       setStatus('正在綁定員工資料...');
 
       apiCall({
@@ -171,12 +377,19 @@
         userId: lineUserId,
         employeeId: employeeId
       }, function (res) {
+        setButtons(true);
+
         if (res.ok) {
           setStatus(
-            '綁定成功\n' +
+            '綁定成功\n\n' +
             '姓名：' + res.name + '\n' +
-            '分店：' + res.store
+            '分店：' + res.store + '\n\n' +
+            '現在可以開始打卡'
           );
+
+          document.getElementById('bindBox').classList.add('hidden');
+          document.getElementById('clockBox').classList.remove('hidden');
+
         } else {
           setStatus(res.message);
         }
@@ -184,9 +397,16 @@
     }
 
     function sendClock(type) {
+      if (!lineUserId) {
+        setStatus('尚未取得 LINE userId，請重新開啟頁面');
+        return;
+      }
+
+      setButtons(false);
       setStatus('正在取得手機定位...\n請允許定位權限');
 
       if (!navigator.geolocation) {
+        setButtons(true);
         setStatus('此手機不支援定位功能');
         return;
       }
@@ -196,7 +416,10 @@
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
 
-          setStatus('定位成功，正在送出：' + type);
+          setStatus(
+            '定位成功\n' +
+            '正在送出：' + type
+          );
 
           apiCall({
             action: 'clockIn',
@@ -205,6 +428,8 @@
             lat: lat,
             lng: lng
           }, function (res) {
+            setButtons(true);
+
             if (res.ok) {
               setStatus(
                 res.message + '\n\n' +
@@ -219,10 +444,19 @@
           });
         },
         function (error) {
-          if (error.code === 1) setStatus('你拒絕了定位權限，無法打卡');
-          else if (error.code === 2) setStatus('無法取得目前位置');
-          else if (error.code === 3) setStatus('定位逾時，請再試一次');
-          else setStatus('定位失敗');
+          setButtons(true);
+
+          let msg = '定位失敗';
+
+          if (error.code === 1) {
+            msg = '你拒絕了定位權限，無法打卡';
+          } else if (error.code === 2) {
+            msg = '無法取得目前位置';
+          } else if (error.code === 3) {
+            msg = '定位逾時，請再試一次';
+          }
+
+          setStatus(msg);
         },
         {
           enableHighAccuracy: true,
@@ -233,12 +467,20 @@
     }
 
     function getToday() {
+      if (!lineUserId) {
+        setStatus('尚未取得 LINE userId，請重新開啟頁面');
+        return;
+      }
+
+      setButtons(false);
       setStatus('正在查詢今日紀錄...');
 
       apiCall({
         action: 'getToday',
         userId: lineUserId
       }, function (res) {
+        setButtons(true);
+
         if (!res.ok) {
           setStatus(res.message);
           return;
@@ -275,23 +517,45 @@
       const script = document.createElement('script');
       script.src = GAS_URL + '?' + query;
 
+      let timer = setTimeout(function () {
+        cleanup();
+        setButtons(true);
+        setStatus('連線逾時，請檢查網路或 Apps Script 部署權限');
+      }, 15000);
+
       window[cbName] = function (res) {
-        delete window[cbName];
-        if (script.parentNode) {
-          script.parentNode.removeChild(script);
-        }
+        cleanup();
         callback(res);
       };
 
       script.onerror = function () {
+        cleanup();
+        setButtons(true);
         setStatus('無法連接 Google Apps Script API');
       };
+
+      function cleanup() {
+        clearTimeout(timer);
+        delete window[cbName];
+
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+      }
 
       document.body.appendChild(script);
     }
 
     function setStatus(text) {
       document.getElementById('status').innerText = text;
+    }
+
+    function setButtons(enabled) {
+      const buttons = document.querySelectorAll('button');
+
+      buttons.forEach(function (btn) {
+        btn.disabled = !enabled;
+      });
     }
   </script>
 </body>
