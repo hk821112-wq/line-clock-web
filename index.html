@@ -337,20 +337,23 @@
       );
 
       apiCall({
-        action: 'clockIn',
-        userId: lineUserId,
-        type: type,
-        lat: '',
-        lng: ''
-      }, function (preCheck) {
-        if (!preCheck.ok && String(preCheck.message || '').includes('尚未綁定')) {
-          setButtons(true);
-          showBindRequired(type);
-          return;
-        }
+  action: 'checkEmployee',
+  userId: lineUserId
+}, function (preCheck) {
+  if (!preCheck.ok && String(preCheck.message || '').includes('尚未綁定')) {
+    setButtons(true);
+    showBindRequired(type);
+    return;
+  }
 
-        startGeoClock(type);
-      });
+  if (!preCheck.ok) {
+    setButtons(true);
+    setStatus(preCheck.message || '員工資料檢查失敗');
+    return;
+  }
+
+  startGeoClock(type);
+});
     }
 
     function startGeoClock(type) {
