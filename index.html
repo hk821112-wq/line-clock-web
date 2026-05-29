@@ -572,11 +572,21 @@ function closeLiffAfterSuccess() {
     try {
       if (typeof liff !== 'undefined' && liff.isInClient()) {
         liff.closeWindow();
+      } else {
+        setStatus(
+          document.getElementById('status').innerText +
+          '\n\n目前不是在 LINE 內開啟，所以無法自動關閉。\n請手動關閉此頁面。'
+        );
       }
     } catch (err) {
       console.log('LIFF 自動關閉失敗：', err);
+
+      setStatus(
+        document.getElementById('status').innerText +
+        '\n\n自動關閉失敗，請手動關閉此頁面。'
+      );
     }
-  }, 300);
+  }, 1200);
 }
   </script>
 </body>
