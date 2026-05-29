@@ -568,23 +568,48 @@ function formatRecordsText(title, records) {
 }
 
 function closeLiffAfterSuccess() {
+  const statusEl = document.getElementById('status');
+
+  let isInClient = false;
+  let lineVersion = '';
+  let liffVersion = '';
+
+  try {
+    if (typeof liff !== 'undefined') {
+      isInClient = liff.isInClient();
+      lineVersion = liff.getLineVersion ? liff.getLineVersion() : '';
+      liffVersion = liff.getVersion ? liff.getVersion() : '';
+    }
+  } catch (err) {}
+
+  statusEl.innerText =
+    statusEl.innerText +
+    '\n\n關閉檢查：' +
+    '\nisInClient：' + isInClient +
+    '\nLINE版本：' + lineVersion +
+    '\nLIFF版本：' + liffVersion;
+
   setTimeout(function () {
     try {
       if (typeof liff !== 'undefined' && liff.isInClient()) {
         liff.closeWindow();
+
+        setTimeout(function () {
+          statusEl.innerText =
+            statusEl.innerText +
+            '\n\n已執行關閉指令，但 LINE 沒有關閉。' +
+            '\n請確認圖文選單連結是 liff.line.me 開頭，不是 GitHub Pages 網址。';
+        }, 1500);
+
       } else {
-        setStatus(
-          document.getElementById('status').innerText +
-          '\n\n目前不是在 LINE 內開啟，所以無法自動關閉。\n請手動關閉此頁面。'
-        );
+        statusEl.innerText =
+          statusEl.innerText +
+          '\n\n目前不是 LIFF 內建瀏覽器，所以 LINE 不允許自動關閉。';
       }
     } catch (err) {
-      console.log('LIFF 自動關閉失敗：', err);
-
-      setStatus(
-        document.getElementById('status').innerText +
-        '\n\n自動關閉失敗，請手動關閉此頁面。'
-      );
+      statusEl.innerText =
+        statusEl.innerText +
+        '\n\n自動關閉失敗：' + err.message;
     }
   }, 1200);
 }
