@@ -547,7 +547,7 @@
           workDays++;
         }
 
-        // 本月紀錄一律用前端重新計算，不吃後端回傳的工時，避免 "-" 或空值卡住
+        // 本月紀錄一律用前端重新計算，不吃後端回傳的工時
         if (d.workIn && d.workOut) {
           d.hours = calcWorkHours(d.workIn, d.workOut, d.breakStart, d.breakEnd);
         } else {
