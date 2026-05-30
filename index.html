@@ -466,7 +466,7 @@ function getMonthRecords() {
       return;
     }
 
-    setStatus(formatRecordsText('本月打卡紀錄', res.records));
+    setStatus(formatMonthRecordsText(res.records));
   });
 }
 
@@ -493,6 +493,99 @@ function getHistoryRecords() {
 
     setStatus(formatRecordsText('歷史打卡紀錄', res.records));
   });
+}
+
+function formatMonthRecordsText(records) {
+  if (!records || records.length === 0) {
+    return '本月打卡紀錄\n\n目前沒有紀錄';
+  }
+
+  const map = {};
+
+  records.forEach(function (r) {
+    const date = r.date || r.日期 || '';
+    const store = r.store || r.分店 || '';
+    const type = r.type || r.類型 || '';
+    const time = r.time || r.時間 || '';
+    const result = r.result || r.狀態 || '';
+
+    const key = date + '_' + store;
+
+    if (!map[key]) {
+      map[key] = {
+        date: date,
+        store: store,
+        workIn: '',
+        breakStart: '',
+        breakEnd: '',
+        workOut: '',
+        result: result,
+        hours: ''
+      };
+    }
+
+    if (type === '上班打卡') {
+      map[key].workIn = time;
+    }
+
+    if (type === '休息開始') {
+      map[key].breakStart = time;
+    }
+
+    if (type === '休息結束') {
+      map[key].breakEnd = time;
+    }
+
+    if (type === '下班打卡') {
+      map[key].workOut = time;
+    }
+
+    if (r.hours || r.工時) {
+      map[key].hours = r.hours || r.工時;
+    }
+
+    if (result) {
+      map[key].result = result;
+    }
+  });
+
+  const days = Object.values(map);
+
+  days.sort(function (a, b) {
+    return String(b.date).localeCompare(String(a.date));
+  });
+
+  let workDays = 0;
+  let totalHours = 0;
+
+  days.forEach(function (d) {
+    if (d.workIn || d.workOut) {
+      workDays++;
+    }
+
+    const h = parseFloat(d.hours || 0);
+    if (!isNaN(h)) {
+      totalHours += h;
+    }
+  });
+
+  let text =
+    '本月打卡紀錄\n\n' +
+    '上班天數：' + workDays + ' 天\n' +
+    '總工時：' + totalHours + ' 小時\n\n';
+
+  days.forEach(function (d, index) {
+    text +=
+      (index + 1) + '. ' + d.date + '\n' +
+      '分店：' + (d.store || '-') + '\n' +
+      '上班打卡：' + (d.workIn || '-') + '\n' +
+      '休息開始：' + (d.breakStart || '-') + '\n' +
+      '休息結束：' + (d.breakEnd || '-') + '\n' +
+      '下班打卡：' + (d.workOut || '-') + '\n' +
+      '工時：' + (d.hours || '-') + '\n\n';
+  });
+
+  return text.trim();
 }
 
 function formatRecordsText(title, records) {
