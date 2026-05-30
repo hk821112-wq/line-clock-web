@@ -198,6 +198,14 @@
           withLoginOnExternalBrowser: true
         });
 
+setStatus(
+  'LIFF 測試\n' +
+  'isInClient：' + liff.isInClient() + '\n' +
+  'LINE版本：' + liff.getLineVersion() + '\n' +
+  'LIFF版本：' + liff.getVersion() + '\n\n' +
+  '如果 isInClient 是 false，就無法自動關閉。'
+);
+
         if (!liff.isLoggedIn()) {
           setStatus('尚未登入 LINE，正在前往登入...');
           liff.login();
@@ -250,23 +258,22 @@
         return;
       }
 
-      if (action === 'breakEnd') {
-        sendClock('休息結束');
-        return;
-      }
+if (action === 'breakEnd') {
+  sendClock('休息結束');
+  return;
+}
 
-      if (action === 'monthRecords') {
-        getMonthRecords();
-        return;
-      }
+if (action === 'monthRecords') {
+  getMonthRecords();
+  return;
+}
 
-      if (action === 'historyRecords') {
-        getHistoryRecords();
-        return;
-      }
+if (action === 'historyRecords') {
+  getHistoryRecords();
+  return;
+}
 
-      document.getElementById('homeBox').classList.remove('hidden');
-
+document.getElementById('homeBox').classList.remove('hidden');
       setStatus(
         'LINE 身分取得成功\n' +
         'LINE 名稱：' + lineDisplayName + '\n\n' +
@@ -347,23 +354,23 @@
       );
 
       apiCall({
-        action: 'checkEmployee',
-        userId: lineUserId
-      }, function (preCheck) {
-        if (!preCheck.ok && String(preCheck.message || '').includes('尚未綁定')) {
-          setButtons(true);
-          showBindRequired(type);
-          return;
-        }
+  action: 'checkEmployee',
+  userId: lineUserId
+}, function (preCheck) {
+  if (!preCheck.ok && String(preCheck.message || '').includes('尚未綁定')) {
+    setButtons(true);
+    showBindRequired(type);
+    return;
+  }
 
-        if (!preCheck.ok) {
-          setButtons(true);
-          setStatus(preCheck.message || '員工資料檢查失敗');
-          return;
-        }
+  if (!preCheck.ok) {
+    setButtons(true);
+    setStatus(preCheck.message || '員工資料檢查失敗');
+    return;
+  }
 
-        startGeoClock(type);
-      });
+  startGeoClock(type);
+});
     }
 
     function startGeoClock(type) {
@@ -396,18 +403,17 @@
             setButtons(true);
 
             if (res.ok) {
-              setStatus(
-                res.message + '\n\n' +
-                '姓名：' + res.name + '\n' +
-                '分店：' + res.store + '\n' +
-                '日期：' + res.date + '\n' +
-                '時間：' + res.time + '\n\n' +
-                '畫面即將自動關閉...'
-              );
+  setStatus(
+    res.message + '\n\n' +
+    '姓名：' + res.name + '\n' +
+    '分店：' + res.store + '\n' +
+    '日期：' + res.date + '\n' +
+    '時間：' + res.time + '\n\n' +
+    '畫面即將自動關閉...'
+  );
 
-              closeLiffAfterSuccess();
-
-            } else {
+  closeLiffAfterSuccess();
+} else {
               if (String(res.message || '').includes('尚未綁定')) {
                 showBindRequired(type);
               } else {
@@ -439,344 +445,146 @@
       );
     }
 
-    function getMonthRecords() {
-      if (!lineUserId) {
-        setStatus('尚未取得 LINE userId，請重新開啟頁面');
-        return;
-      }
+function getMonthRecords() {
+  if (!lineUserId) {
+    setStatus('尚未取得 LINE userId，請重新開啟頁面');
+    return;
+  }
 
-      hideAllBoxes();
-      setButtons(false);
-      setStatus('正在查詢本月打卡紀錄...');
+  hideAllBoxes();
+  setButtons(false);
+  setStatus('正在查詢本月打卡紀錄...');
 
-      apiCall({
-        action: 'getMonthRecords',
-        userId: lineUserId
-      }, function (res) {
-        setButtons(true);
+  apiCall({
+    action: 'getMonthRecords',
+    userId: lineUserId
+  }, function (res) {
+    setButtons(true);
 
-        if (!res.ok) {
-          setStatus(res.message || '查詢本月紀錄失敗');
-          return;
-        }
-
-        setStatus(formatMonthRecordsText(res.records));
-      });
+    if (!res.ok) {
+      setStatus(res.message || '查詢本月紀錄失敗');
+      return;
     }
 
-    function getHistoryRecords() {
-      if (!lineUserId) {
-        setStatus('尚未取得 LINE userId，請重新開啟頁面');
-        return;
-      }
+    setStatus(formatMonthRecordsText(res.records));
+  });
+}
 
-      hideAllBoxes();
-      setButtons(false);
-      setStatus('正在查詢歷史打卡紀錄...');
+function getHistoryRecords() {
+  if (!lineUserId) {
+    setStatus('尚未取得 LINE userId，請重新開啟頁面');
+    return;
+  }
 
-      apiCall({
-        action: 'getHistoryRecords',
-        userId: lineUserId
-      }, function (res) {
-        setButtons(true);
+  hideAllBoxes();
+  setButtons(false);
+  setStatus('正在查詢歷史打卡紀錄...');
 
-        if (!res.ok) {
-          setStatus(res.message || '查詢歷史紀錄失敗');
-          return;
-        }
+  apiCall({
+    action: 'getHistoryRecords',
+    userId: lineUserId
+  }, function (res) {
+    setButtons(true);
 
-        setStatus(formatRecordsText('歷史打卡紀錄', res.records));
-      });
+    if (!res.ok) {
+      setStatus(res.message || '查詢歷史紀錄失敗');
+      return;
     }
 
-    function formatMonthRecordsText(records) {
-      if (!records || records.length === 0) {
-        return '本月打卡紀錄\n\n目前沒有紀錄';
-      }
+    setStatus(formatRecordsText('歷史打卡紀錄', res.records));
+  });
+}
 
-      const map = {};
+function calcWorkHours(workIn, workOut, breakStart, breakEnd) {
+  const inMin = roundedTimeToMinutes(workIn);
+  const outMin = roundedTimeToMinutes(workOut);
 
-      records.forEach(function (r) {
-        const date = r.date || r.日期 || '';
-        const store = r.store || r.分店 || '';
-        const type = r.type || r.類型 || '';
-        const time = r.time || r.時間 || '';
-        const result = r.result || r.狀態 || '';
+  if (inMin === null || outMin === null) {
+    return '';
+  }
 
-        const key = date + '_' + store;
+  let total = outMin - inMin;
 
-        if (!map[key]) {
-          map[key] = {
-            date: date,
-            store: store,
-            workIn: '',
-            breakStart: '',
-            breakEnd: '',
-            workOut: '',
-            result: result,
-            hours: ''
-          };
-        }
+  // 跨日下班
+  if (total < 0) {
+    total += 24 * 60;
+  }
 
-        if (type === '上班打卡') {
-          map[key].workIn = time;
-        }
+  const bsMin = roundedTimeToMinutes(breakStart);
+  const beMin = roundedTimeToMinutes(breakEnd);
 
-        if (type === '休息開始') {
-          map[key].breakStart = time;
-        }
+  if (bsMin !== null && beMin !== null) {
+    let breakTotal = beMin - bsMin;
 
-        if (type === '休息結束') {
-          map[key].breakEnd = time;
-        }
-
-        if (type === '下班打卡') {
-          map[key].workOut = time;
-        }
-
-        if (r.hours || r.工時) {
-          map[key].hours = r.hours || r.工時;
-        }
-
-        if (result) {
-          map[key].result = result;
-        }
-      });
-
-      const days = Object.values(map);
-
-      days.sort(function (a, b) {
-        return String(b.date).localeCompare(String(a.date));
-      });
-
-      let workDays = 0;
-      let totalHours = 0;
-
-      days.forEach(function (d) {
-        if (d.workIn || d.workOut) {
-          workDays++;
-        }
-
-        if (!d.hours && d.workIn && d.workOut) {
-          d.hours = calcWorkHours(d.workIn, d.workOut, d.breakStart, d.breakEnd);
-        }
-
-        const h = parseFloat(d.hours || 0);
-
-        if (!isNaN(h)) {
-          totalHours += h;
-        }
-      });
-
-      let text =
-        '本月打卡紀錄\n\n' +
-        '上班天數：' + workDays + ' 天\n' +
-        '總工時：' + formatHour(totalHours) + ' 小時\n\n';
-
-      days.forEach(function (d, index) {
-        text +=
-          (index + 1) + '. ' + d.date + '\n' +
-          '分店：' + (d.store || '-') + '\n' +
-          '上班打卡：' + formatTime(d.workIn) + '\n' +
-          '休息開始：' + formatTime(d.breakStart) + '\n' +
-          '休息結束：' + formatTime(d.breakEnd) + '\n' +
-          '下班打卡：' + formatTime(d.workOut) + '\n' +
-          '工時：' + (d.hours ? formatHour(d.hours) + ' 小時' : '-') + '\n\n';
-      });
-
-      return text.trim();
+    // 跨日休息
+    if (breakTotal < 0) {
+      breakTotal += 24 * 60;
     }
 
-    function calcWorkHours(workIn, workOut, breakStart, breakEnd) {
-      const inMin = roundedTimeToMinutes(workIn);
-      const outMin = roundedTimeToMinutes(workOut);
+    total -= breakTotal;
+  }
 
-      if (inMin === null || outMin === null) {
-        return '';
+  if (total < 0) {
+    total = 0;
+  }
+
+  return Math.round((total / 60) * 100) / 100;
+}
+function timeToMinutes(timeText) {
+  if (!timeText) {
+    return null;
+  }
+
+  const parts = String(timeText).split(':');
+
+  if (parts.length < 2) {
+    return null;
+  }
+
+  const h = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+
+  if (isNaN(h) || isNaN(m)) {
+    return null;
+  }
+
+  return h * 60 + m;
+}
+
+function formatTime(timeText) {
+  if (!timeText) {
+    return '-';
+  }
+
+  const parts = String(timeText).split(':');
+
+  if (parts.length >= 2) {
+    return parts[0] + ':' + parts[1];
+  }
+
+  return timeText;
+}
+
+function formatHour(value) {
+  const num = parseFloat(value || 0);
+
+  if (isNaN(num)) {
+    return '0';
+  }
+
+  return Number(num.toFixed(2)).toString();
+}
+function closeLiffAfterSuccess() {
+  setTimeout(function () {
+    try {
+      if (typeof liff !== 'undefined' && liff.isInClient()) {
+        liff.closeWindow();
       }
-
-      let total = outMin - inMin;
-
-      // 跨日下班，例如 17:00 到 00:02
-      if (total < 0) {
-        total += 24 * 60;
-      }
-
-      const bsMin = roundedTimeToMinutes(breakStart);
-      const beMin = roundedTimeToMinutes(breakEnd);
-
-      if (bsMin !== null && beMin !== null) {
-        let breakTotal = beMin - bsMin;
-
-        // 跨日休息
-        if (breakTotal < 0) {
-          breakTotal += 24 * 60;
-        }
-
-        total -= breakTotal;
-      }
-
-      if (total < 0) {
-        total = 0;
-      }
-
-      return Math.round((total / 60) * 100) / 100;
+    } catch (err) {
+      console.log('LIFF 自動關閉失敗：', err);
     }
-
-    function roundedTimeToMinutes(timeText) {
-      if (!timeText) {
-        return null;
-      }
-
-      const parts = String(timeText).split(':');
-
-      if (parts.length < 2) {
-        return null;
-      }
-
-      let h = parseInt(parts[0], 10);
-      const m = parseInt(parts[1], 10);
-
-      if (isNaN(h) || isNaN(m)) {
-        return null;
-      }
-
-      let roundedMinute = 0;
-
-      // 00～15 分 → 算當小時 00 分
-      if (m >= 0 && m <= 15) {
-        roundedMinute = 0;
-      }
-
-      // 16～45 分 → 算當小時 30 分
-      else if (m >= 16 && m <= 45) {
-        roundedMinute = 30;
-      }
-
-      // 46～59 分 → 算下一小時 00 分
-      else if (m >= 46 && m <= 59) {
-        h += 1;
-        roundedMinute = 0;
-      }
-
-      return h * 60 + roundedMinute;
-    }
-
-    function formatTime(timeText) {
-      if (!timeText) {
-        return '-';
-      }
-
-      const parts = String(timeText).split(':');
-
-      if (parts.length >= 2) {
-        return parts[0] + ':' + parts[1];
-      }
-
-      return timeText;
-    }
-
-    function formatHour(value) {
-      const num = parseFloat(value || 0);
-
-      if (isNaN(num)) {
-        return '0';
-      }
-
-      return Number(num.toFixed(2)).toString();
-    }
-
-    function formatRecordsText(title, records) {
-      if (!records || records.length === 0) {
-        return title + '\n\n目前沒有紀錄';
-      }
-
-      let text = title + '\n\n';
-
-      records.forEach(function (r, index) {
-        text +=
-          (index + 1) + '. ' +
-          r.date + ' ' +
-          r.type + '\n' +
-          '分店：' + r.store + '\n' +
-          '時間：' + r.time + '\n' +
-          '狀態：' + r.result + '\n\n';
-      });
-
-      return text.trim();
-    }
-
-    function apiCall(params, callback) {
-      const cbName = 'jsonpCallback_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
-
-      params.callback = cbName;
-
-      const query = Object.keys(params)
-        .map(function (key) {
-          return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
-        })
-        .join('&');
-
-      const script = document.createElement('script');
-      script.src = API_URL + '?' + query;
-
-      let timer = setTimeout(function () {
-        cleanup();
-        setButtons(true);
-        setStatus('連線逾時，請檢查網路或 Apps Script 部署權限');
-      }, 15000);
-
-      window[cbName] = function (res) {
-        cleanup();
-        callback(res);
-      };
-
-      script.onerror = function () {
-        cleanup();
-        setButtons(true);
-        setStatus(
-          '無法連接 Google Apps Script API\n\n' +
-          '目前連線網址：\n' +
-          script.src + '\n\n' +
-          '請確認 GitHub Pages 是否已更新到新版'
-        );
-      };
-
-      function cleanup() {
-        clearTimeout(timer);
-        delete window[cbName];
-
-        if (script.parentNode) {
-          script.parentNode.removeChild(script);
-        }
-      }
-
-      document.body.appendChild(script);
-    }
-
-    function setStatus(text) {
-      document.getElementById('status').innerText = text;
-    }
-
-    function setButtons(enabled) {
-      const buttons = document.querySelectorAll('button');
-
-      buttons.forEach(function (btn) {
-        btn.disabled = !enabled;
-      });
-    }
-
-    function closeLiffAfterSuccess() {
-      setTimeout(function () {
-        try {
-          if (typeof liff !== 'undefined' && liff.isInClient()) {
-            liff.closeWindow();
-          }
-        } catch (err) {
-          console.log('LIFF 自動關閉失敗：', err);
-        }
-      }, 1000);
-    }
+  }, 1000);
+}
   </script>
 </body>
 </html>
