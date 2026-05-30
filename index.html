@@ -460,7 +460,7 @@
           return;
         }
 
-        setStatus(formatMonthRecordsText(res.records || []));
+        setStatus(formatGroupedRecordsText('本月打卡紀錄', res.records || []));
       });
     }
 
@@ -485,13 +485,13 @@
           return;
         }
 
-        setStatus(formatRecordsText('歷史打卡紀錄', res.records || []));
+        setStatus(formatGroupedRecordsText('歷史打卡紀錄', res.records || []));
       });
     }
 
-    function formatMonthRecordsText(records) {
+    function formatGroupedRecordsText(title, records) {
       if (!records || records.length === 0) {
-        return '本月打卡紀錄\n\n目前沒有紀錄';
+        return title + '\n\n目前沒有紀錄';
       }
 
       const map = {};
@@ -547,7 +547,6 @@
           workDays++;
         }
 
-        // 本月紀錄一律用前端重新計算，不吃後端回傳的工時
         if (d.workIn && d.workOut) {
           d.hours = calcWorkHours(d.workIn, d.workOut, d.breakStart, d.breakEnd);
         } else {
@@ -562,7 +561,7 @@
       });
 
       let text =
-        '本月打卡紀錄\n\n' +
+        title + '\n\n' +
         '上班天數：' + workDays + ' 天\n' +
         '總工時：' + formatHour(totalHours) + ' 小時\n\n';
 
@@ -590,7 +589,6 @@
 
       let total = outMin - inMin;
 
-      // 跨日下班，例如 17:00 到 00:02
       if (total < 0) {
         total += 24 * 60;
       }
@@ -601,7 +599,6 @@
       if (bsMin !== null && beMin !== null) {
         let breakTotal = beMin - bsMin;
 
-        // 跨日休息
         if (breakTotal < 0) {
           breakTotal += 24 * 60;
         }
@@ -628,18 +625,11 @@
 
       let roundedMinute = 0;
 
-      // 00～15 分 → 算當小時 00 分
       if (m >= 0 && m <= 15) {
         roundedMinute = 0;
-      }
-
-      // 16～45 分 → 算當小時 30 分
-      else if (m >= 16 && m <= 45) {
+      } else if (m >= 16 && m <= 45) {
         roundedMinute = 30;
-      }
-
-      // 46～59 分 → 算下一小時 00 分
-      else if (m >= 46 && m <= 59) {
+      } else if (m >= 46 && m <= 59) {
         h += 1;
         roundedMinute = 0;
       }
@@ -654,7 +644,6 @@
 
       const s = String(timeText).trim();
 
-      // 支援 "17:00:00"、"0:02:00"、"17:00"
       const match = s.match(/(\d{1,2})\s*:\s*(\d{1,2})(?:\s*:\s*(\d{1,2}))?/);
 
       if (!match) {
@@ -692,26 +681,6 @@
       }
 
       return Number(num.toFixed(2)).toString();
-    }
-
-    function formatRecordsText(title, records) {
-      if (!records || records.length === 0) {
-        return title + '\n\n目前沒有紀錄';
-      }
-
-      let text = title + '\n\n';
-
-      records.forEach(function (r, index) {
-        text +=
-          (index + 1) + '. ' +
-          (getField(r, ['date', '日期']) || '-') + ' ' +
-          (getField(r, ['type', '類型', '動作']) || '-') + '\n' +
-          '分店：' + (getField(r, ['store', '分店']) || '-') + '\n' +
-          '時間：' + formatTime(getField(r, ['time', '時間'])) + '\n' +
-          '狀態：' + (getField(r, ['result', '狀態']) || '-') + '\n\n';
-      });
-
-      return text.trim();
     }
 
     function getField(obj, keys) {
