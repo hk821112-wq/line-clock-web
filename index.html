@@ -550,7 +550,7 @@ let totalHours = 0;
 
 days.forEach(function (d) {
   if (d.workIn || d.workOut) {
-    workDaySet.add(d.date);
+    workDaySet.add(String(d.date || '').trim());
   }
 
   if (d.workIn && d.workOut) {
