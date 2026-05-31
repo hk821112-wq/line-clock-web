@@ -545,26 +545,28 @@
         return String(b.date).localeCompare(String(a.date));
       });
 
-      let workDays = 0;
-      let totalHours = 0;
+const workDaySet = new Set();
+let totalHours = 0;
 
-      days.forEach(function (d) {
-        if (d.workIn || d.workOut) {
-          workDays++;
-        }
+days.forEach(function (d) {
+  if (d.workIn || d.workOut) {
+    workDaySet.add(d.date);
+  }
 
-        if (d.workIn && d.workOut) {
-          d.hours = calcWorkHours(d.workIn, d.workOut, d.breakStart, d.breakEnd);
-        } else {
-          d.hours = '';
-        }
+  if (d.workIn && d.workOut) {
+    d.hours = calcWorkHours(d.workIn, d.workOut, d.breakStart, d.breakEnd);
+  } else {
+    d.hours = '';
+  }
 
-        const h = parseFloat(d.hours);
+  const h = parseFloat(d.hours);
 
-        if (!isNaN(h)) {
-          totalHours += h;
-        }
-      });
+  if (!isNaN(h)) {
+    totalHours += h;
+  }
+});
+
+const workDays = workDaySet.size;
 
       let text =
         title + '\n\n' +
