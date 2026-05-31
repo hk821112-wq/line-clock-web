@@ -490,12 +490,18 @@
     }
 
     function formatGroupedRecordsText(title, records) {
-      if (!records || records.length === 0) {
-        return title + '\n\n目前沒有紀錄';
-      }
+  records = records || [];
 
-      const map = {};
+  records = records.filter(function (r) {
+    const result = getField(r, ['result', '狀態']);
+    return result === '成功' || result === '補卡';
+  });
 
+  if (records.length === 0) {
+    return title + '\n\n目前沒有紀錄';
+  }
+
+  const map = {};
       records.forEach(function (r) {
         const date = getField(r, ['date', '日期']);
         const store = getField(r, ['store', '分店']);
@@ -701,6 +707,7 @@
       const cbName = 'jsonpCallback_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
 
       params.callback = cbName;
+      params._t = Date.now();
 
       const query = Object.keys(params)
         .map(function (key) {
