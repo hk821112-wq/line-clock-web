@@ -138,6 +138,34 @@
       color: #9aa39a;
       margin-top: 12px;
     }
+
+    .status-blocked {
+      text-align: center;
+      padding: 6px 0 2px;
+    }
+
+    .status-blocked-icon {
+      font-size: 76px;
+      line-height: 1;
+      margin-bottom: 14px;
+    }
+
+    .status-blocked-title {
+      font-size: 24px;
+      font-weight: 900;
+      color: #d93025;
+      margin-bottom: 16px;
+      letter-spacing: 1px;
+    }
+
+    .status-blocked-message {
+      text-align: left;
+      font-size: 15px;
+      line-height: 1.9;
+      white-space: pre-line;
+      word-break: break-word;
+      color: #243529;
+    }
   </style>
 </head>
 
@@ -754,8 +782,35 @@ const workDays = workDaySet.size;
       document.body.appendChild(script);
     }
 
-    function setStatus(text) {
-      document.getElementById('status').innerText = text;
+        function setStatus(text) {
+      const statusBox = document.getElementById('status');
+      const message = String(text || '');
+
+      const isBlocked =
+        message.indexOf('已經有紀錄') !== -1 ||
+        message.indexOf('系統已阻擋') !== -1 ||
+        message.indexOf('避免覆蓋原本資料') !== -1;
+
+      if (isBlocked) {
+        statusBox.innerHTML =
+          '<div class="status-blocked">' +
+            '<div class="status-blocked-icon">❌</div>' +
+            '<div class="status-blocked-title">重複打卡已阻擋</div>' +
+            '<div class="status-blocked-message">' + escapeHtml(message) + '</div>' +
+          '</div>';
+        return;
+      }
+
+      statusBox.innerText = message;
+    }
+
+    function escapeHtml(text) {
+      return String(text || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
     }
 
     function setButtons(enabled) {
