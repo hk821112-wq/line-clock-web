@@ -1277,6 +1277,154 @@ const workDays = workDaySet.size;
         }
       }, 1000);
     }
-  </script>
+  
+    // =====================================================
+    // V15 補卡送審顯示修正版
+    // 目的：保留「送審中(沒過聯繫主管)」，不要被時間格式化成 -
+    // =====================================================
+
+    function isPendingMakeupDisplayTextV15(timeText) {
+      return String(timeText || '').indexOf('送審中') !== -1;
+    }
+
+    function formatTimeWithSeconds(timeText) {
+      const raw = String(timeText || '').trim();
+
+      if (isPendingMakeupDisplayTextV15(raw)) {
+        return raw;
+      }
+
+      const parsed = parseTimeParts(raw);
+
+      if (!parsed) {
+        return '-';
+      }
+
+      const sec = parsed.s !== undefined && parsed.s !== null ? parsed.s : 0;
+      return pad2(parsed.h) + ':' + pad2(parsed.m) + ':' + pad2(sec);
+    }
+
+    function formatTime(timeText) {
+      const raw = String(timeText || '').trim();
+
+      if (isPendingMakeupDisplayTextV15(raw)) {
+        return raw;
+      }
+
+      const parsed = parseTimeParts(raw);
+
+      if (!parsed) {
+        return '-';
+      }
+
+      return pad2(parsed.h) + ':' + pad2(parsed.m);
+    }
+
+    function formatGroupedRecordsText(title, records) {
+      records = records || [];
+
+      records = records.filter(function (r) {
+        const result = getField(r, ['result', '狀態']);
+        return result === '成功' || result === '補卡' || result === '送審中';
+      });
+
+      if (records.length === 0) {
+        return title + '\n\n目前沒有紀錄';
+      }
+
+      const map = {};
+
+      records.forEach(function (r) {
+        const date = getField(r, ['date', '日期']);
+        const store = getField(r, ['store', '分店']);
+        const type = getField(r, ['type', '類型', '動作']);
+        const time = getField(r, ['time', '時間']);
+        const result = getField(r, ['result', '狀態']);
+        const key = date + '_' + store;
+
+        if (!map[key]) {
+          map[key] = {
+            date: date,
+            store: store,
+            workIn: '',
+            breakStart: '',
+            breakEnd: '',
+            workOut: '',
+            result: result,
+            hours: ''
+          };
+        }
+
+        if (type === '上班打卡') {
+          map[key].workIn = time;
+        } else if (type === '休息開始') {
+          map[key].breakStart = time;
+        } else if (type === '休息結束') {
+          map[key].breakEnd = time;
+        } else if (type === '下班打卡') {
+          map[key].workOut = time;
+        }
+
+        if (result) {
+          map[key].result = result;
+        }
+      });
+
+      const days = Object.values(map);
+
+      days.sort(function (a, b) {
+        return String(b.date).localeCompare(String(a.date));
+      });
+
+      const workDaySet = new Set();
+      let totalHours = 0;
+
+      days.forEach(function (d) {
+        if (d.workIn || d.workOut) {
+          workDaySet.add(String(d.date || '').trim());
+        }
+
+        const hasPending =
+          isPendingMakeupDisplayTextV15(d.workIn) ||
+          isPendingMakeupDisplayTextV15(d.breakStart) ||
+          isPendingMakeupDisplayTextV15(d.breakEnd) ||
+          isPendingMakeupDisplayTextV15(d.workOut);
+
+        if (!hasPending && d.workIn && d.workOut) {
+          d.hours = calcWorkHours(d.workIn, d.workOut, d.breakStart, d.breakEnd);
+        } else {
+          d.hours = '';
+        }
+
+        const h = parseFloat(d.hours);
+
+        if (!isNaN(h)) {
+          totalHours += h;
+        }
+      });
+
+      const workDays = workDaySet.size;
+
+      let text =
+        title + '\n\n' +
+        '上班天數：' + workDays + ' 天\n' +
+        '總工時：' + formatHour(totalHours) + ' 小時\n\n';
+
+      days.forEach(function (d, index) {
+        text +=
+          (index + 1) + '. ' + (d.date || '-') + '\n' +
+          '分店：' + (d.store || '-') + '\n' +
+          '上班打卡：' + formatTime(d.workIn) + '\n' +
+          '休息開始：' + formatTime(d.breakStart) + '\n' +
+          '休息結束：' + formatTime(d.breakEnd) + '\n' +
+          '下班打卡：' + formatTime(d.workOut) + '\n' +
+          '工時：' + (d.hours !== '' ? formatHour(d.hours) + ' 小時' : '-') + '\n\n';
+      });
+
+      return text.trim();
+    }
+
+
+</script>
 </body>
 </html>
