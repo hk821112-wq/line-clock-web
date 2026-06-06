@@ -86,6 +86,26 @@
       font-family: inherit;
     }
 
+input[type="date"],
+input[type="time"],
+select,
+textarea {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: block;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.success-card input,
+.success-card select,
+.success-card textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
     textarea {
       min-height: 86px;
       resize: vertical;
