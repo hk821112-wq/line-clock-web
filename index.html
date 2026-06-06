@@ -2549,9 +2549,7 @@ const workDays = workDaySet.size;
             makeSuccessRowHtml('分店', displayStore) +
             makeSuccessRowHtml('日期', displayDate) +
             makeSuccessRowHtml('上一筆申請', previousType + '：' + (previousTime || '-')) +
-            makeSuccessRowHtml('本次申請', currentType + '：' + (currentTime || '-')) +
-            makeSuccessRowHtml('上一筆原因', previousReason) +
-            makeSuccessRowHtml('本次原因', displayReason) +
+            makeSuccessRowHtml('本次申請(取代)', currentType + '：' + (currentTime || '-')) +
           '</div>' +
           '<button class="btn-main" onclick="submitMakeupRequest(true)">取代</button>' +
           '<button class="btn-outline" onclick="showMakeupPage()">取消</button>' +
