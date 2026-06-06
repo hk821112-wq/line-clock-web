@@ -2521,18 +2521,23 @@ const workDays = workDaySet.size;
       const statusBox = document.getElementById('status');
       const payload = Object.assign({}, pendingMakeupReplacePayloadV35 || {});
 
+      const replaceInfo = res.replaceInfo || {};
+      const previous = replaceInfo.previous || {};
+      const current = replaceInfo.current || {};
+
       const displayName = res.name || lineDisplayName || '-';
-      const displayStore = res.store || payload.store || '-';
-      const displayDate = res.currentDate || res.date || payload.date || '-';
-      const displayType = res.currentType || res.type || payload.type || '-';
-      const displayReason = res.currentReason || res.reason || payload.reason || '-';
+      const displayStore = res.store || current.store || payload.store || '-';
+      const displayDate = current.date || res.currentDate || res.date || payload.date || '-';
+      const displayReason = current.reason || res.currentReason || res.reason || payload.reason || '-';
 
-      const previousType = res.previousType || res.oldType || res.pendingType || displayType;
-      const previousTime = formatTime(res.previousTime || res.oldTime || res.pendingTime || '');
-      const previousReason = res.previousReason || res.oldReason || res.pendingReason || '';
+      const previousType = previous.type || res.previousType || res.oldType || res.pendingType || res.type || payload.type || '-';
+      const previousTimeRaw = previous.time || res.previousTime || res.oldTime || res.pendingTime || '';
+      const previousTime = previousTimeRaw ? formatTime(previousTimeRaw) : '未取得上一筆時間';
+      const previousReason = previous.reason || res.previousReason || res.oldReason || res.pendingReason || '未取得上一筆原因';
 
-      const currentType = res.currentType || res.type || payload.type || '-';
-      const currentTime = formatTime(res.currentTime || res.time || payload.time || '');
+      const currentType = current.type || res.currentType || res.type || payload.type || '-';
+      const currentTimeRaw = current.time || res.currentTime || res.time || payload.time || '';
+      const currentTime = currentTimeRaw ? formatTime(currentTimeRaw) : '-';
 
       statusBox.innerHTML =
         '<div class="success-card">' +
@@ -2545,7 +2550,7 @@ const workDays = workDaySet.size;
             makeSuccessRowHtml('日期', displayDate) +
             makeSuccessRowHtml('上一筆申請', previousType + '：' + (previousTime || '-')) +
             makeSuccessRowHtml('本次申請', currentType + '：' + (currentTime || '-')) +
-            (previousReason ? makeSuccessRowHtml('上一筆原因', previousReason) : '') +
+            makeSuccessRowHtml('上一筆原因', previousReason) +
             makeSuccessRowHtml('本次原因', displayReason) +
           '</div>' +
           '<button class="btn-main" onclick="submitMakeupRequest(true)">取代</button>' +
