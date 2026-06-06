@@ -243,7 +243,10 @@
         type: type,
         time: time,
         reason: reason,
-        replacePending: replacePending ? 'true' : 'false'
+        replacePending: replacePending ? 'true' : 'false',
+        forceReplacePending: replacePending ? 'YES' : 'NO',
+        confirmReplace: replacePending ? 'true' : 'false',
+        overridePending: replacePending ? '1' : '0'
       }, function (res) {
         setButtons(true);
 
@@ -2356,7 +2359,10 @@ const workDays = workDaySet.size;
         type: type,
         time: time,
         reason: reason,
-        replacePending: replacePending ? 'true' : 'false'
+        replacePending: replacePending ? 'true' : 'false',
+        forceReplacePending: replacePending ? 'YES' : 'NO',
+        confirmReplace: replacePending ? 'true' : 'false',
+        overridePending: replacePending ? '1' : '0'
       }, function (res) {
         setButtons(true);
 
@@ -2482,7 +2488,10 @@ const workDays = workDaySet.size;
         type: type,
         time: time,
         reason: reason,
-        replacePending: replacePending ? 'true' : 'false'
+        replacePending: replacePending ? 'true' : 'false',
+        forceReplacePending: replacePending ? 'YES' : 'NO',
+        confirmReplace: replacePending ? 'true' : 'false',
+        overridePending: replacePending ? '1' : '0'
       }, function (res) {
         setButtons(true);
 
@@ -2558,14 +2567,14 @@ const workDays = workDaySet.size;
 
 
     // =====================================================
-    // V39 最終覆蓋：補卡取代確認畫面 + 取代按鈕真正送出
+    // V40 最終覆蓋：補卡取代確認畫面 + 取代按鈕真正送出
     // 顯示：上一筆申請 / 本次申請(取代)，移除原因
     // =====================================================
 
-    var pendingMakeupReplacePayloadV39 = null;
-    var pendingMakeupReplaceInfoV39 = null;
+    var pendingMakeupReplacePayloadV40 = null;
+    var pendingMakeupReplaceInfoV40 = null;
 
-    function collectMakeupPayloadV39() {
+    function collectMakeupPayloadV40() {
       const dateInput = document.getElementById('makeupDate');
       const storeInput = document.getElementById('makeupStore');
       const typeInput = document.getElementById('makeupType');
@@ -2582,13 +2591,13 @@ const workDays = workDaySet.size;
         };
       }
 
-      return Object.assign({}, pendingMakeupReplacePayloadV39 || pendingMakeupReplacePayloadV35 || {});
+      return Object.assign({}, pendingMakeupReplacePayloadV40 || pendingMakeupReplacePayloadV35 || {});
     }
 
     function submitMakeupRequest(replacePending) {
       replacePending = replacePending === true;
 
-      const payload = collectMakeupPayloadV39();
+      const payload = collectMakeupPayloadV40();
       const date = payload.date || '';
       const store = payload.store || '';
       const type = payload.type || '';
@@ -2600,7 +2609,7 @@ const workDays = workDaySet.size;
         return;
       }
 
-      pendingMakeupReplacePayloadV39 = {
+      pendingMakeupReplacePayloadV40 = {
         date: date,
         store: store,
         type: type,
@@ -2619,7 +2628,10 @@ const workDays = workDaySet.size;
         type: type,
         time: time,
         reason: reason,
-        replacePending: replacePending ? 'true' : 'false'
+        replacePending: replacePending ? 'true' : 'false',
+        forceReplacePending: replacePending ? 'YES' : 'NO',
+        confirmReplace: replacePending ? 'true' : 'false',
+        overridePending: replacePending ? '1' : '0'
       }, function (res) {
         setButtons(true);
 
@@ -2632,11 +2644,11 @@ const workDays = workDaySet.size;
             msg.indexOf('同類型補卡') !== -1 ||
             msg.indexOf('取代剛才') !== -1
           ) {
-            // 如果已經是按「取代」後還回到這裡，代表 GAS 還沒部署 V39
+            // 如果已經是按「取代」後還回到這裡，代表 GAS 還沒部署 V40
             if (replacePending) {
               setStatus(
                 '取代失敗：後端仍回傳「需要取代確認」。\n\n' +
-                '請確認 GAS 已覆蓋 V39 並重新部署 Web App 新版本。'
+                '請確認 GAS 已覆蓋 V40 並重新部署 Web App 新版本。'
               );
               return;
             }
@@ -2658,15 +2670,15 @@ const workDays = workDaySet.size;
           return;
         }
 
-        pendingMakeupReplacePayloadV39 = null;
-        pendingMakeupReplaceInfoV39 = null;
+        pendingMakeupReplacePayloadV40 = null;
+        pendingMakeupReplaceInfoV40 = null;
         showMakeupSubmitted(res);
       });
     }
 
     function showReplacePendingMakeupConfirm(res) {
       const statusBox = document.getElementById('status');
-      const payload = Object.assign({}, pendingMakeupReplacePayloadV39 || pendingMakeupReplacePayloadV35 || {});
+      const payload = Object.assign({}, pendingMakeupReplacePayloadV40 || pendingMakeupReplacePayloadV35 || {});
 
       const replaceInfo = res.replaceInfo || {};
       const previous = replaceInfo.previous || {};
@@ -2684,7 +2696,7 @@ const workDays = workDaySet.size;
       const currentTimeRaw = current.time || res.currentTime || res.time || payload.time || '';
       const currentTime = currentTimeRaw ? formatTime(currentTimeRaw) : '-';
 
-      pendingMakeupReplaceInfoV39 = {
+      pendingMakeupReplaceInfoV40 = {
         previousType: previousType,
         previousTime: previousTime,
         currentType: currentType,
@@ -2703,18 +2715,18 @@ const workDays = workDaySet.size;
             makeSuccessRowHtml('上一筆申請', previousType + '：' + (previousTime || '-')) +
             makeSuccessRowHtml('本次申請(取代)', currentType + '：' + (currentTime || '-')) +
           '</div>' +
-          '<button class="btn-main" onclick="confirmReplacePendingMakeupV39()">取代</button>' +
-          '<button class="btn-outline" onclick="cancelReplacePendingMakeupV39()">取消</button>' +
+          '<button class="btn-main" onclick="confirmReplacePendingMakeupV40()">取代</button>' +
+          '<button class="btn-outline" onclick="cancelReplacePendingMakeupV40()">取消</button>' +
         '</div>';
     }
 
-    function confirmReplacePendingMakeupV39() {
+    function confirmReplacePendingMakeupV40() {
       submitMakeupRequest(true);
     }
 
-    function cancelReplacePendingMakeupV39() {
-      pendingMakeupReplacePayloadV39 = null;
-      pendingMakeupReplaceInfoV39 = null;
+    function cancelReplacePendingMakeupV40() {
+      pendingMakeupReplacePayloadV40 = null;
+      pendingMakeupReplaceInfoV40 = null;
       showMakeupPage();
     }
 
@@ -2722,8 +2734,8 @@ const workDays = workDaySet.size;
     setTimeout(function () {
       try {
         const footer = document.querySelector('.footer');
-        if (footer && footer.innerText.indexOf('V39') === -1) {
-          footer.innerText = footer.innerText + '｜前端 V39';
+        if (footer && footer.innerText.indexOf('V40') === -1) {
+          footer.innerText = footer.innerText + '｜前端 V40';
         }
       } catch (e) {}
     }, 500);
