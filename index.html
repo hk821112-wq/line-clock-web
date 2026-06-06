@@ -6,7 +6,182 @@
 
   <title>小時候打卡系統</title>
 
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js">
+
+    // =====================================================
+    // V29 前端保險：只要 API 回傳待審核/補卡待審核，就固定顯示完整文字
+    // =====================================================
+
+    const PENDING_MAKEUP_DISPLAY_TEXT_V29_FRONT = '待審核 (太久沒通過,請聯繫主管)';
+
+    function isPendingMakeupDisplayTextV29Front(value) {
+      const text = String(value || '').trim();
+
+      return (
+        text.indexOf('待審核') !== -1 ||
+        text.indexOf('送審中') !== -1 ||
+        text.indexOf('補卡待審核') !== -1 ||
+        text.indexOf('補卡送審中') !== -1 ||
+        text.indexOf('上班補卡待審核') !== -1
+      );
+    }
+
+    function formatTimeWithSeconds(timeText) {
+      const raw = String(timeText || '').trim();
+
+      if (isPendingMakeupDisplayTextV29Front(raw)) {
+        return PENDING_MAKEUP_DISPLAY_TEXT_V29_FRONT;
+      }
+
+      const parsed = parseTimeParts(raw);
+
+      if (!parsed) {
+        return '-';
+      }
+
+      const sec = parsed.s !== undefined && parsed.s !== null ? parsed.s : 0;
+      return pad2(parsed.h) + ':' + pad2(parsed.m) + ':' + pad2(sec);
+    }
+
+    function formatTime(timeText) {
+      const raw = String(timeText || '').trim();
+
+      if (isPendingMakeupDisplayTextV29Front(raw)) {
+        return PENDING_MAKEUP_DISPLAY_TEXT_V29_FRONT;
+      }
+
+      const parsed = parseTimeParts(raw);
+
+      if (!parsed) {
+        return '-';
+      }
+
+      return pad2(parsed.h) + ':' + pad2(parsed.m);
+    }
+
+    function recordShouldDisplayV29Front(record) {
+      const result = getField(record, ['result', '狀態']);
+      const status = getField(record, ['status', '狀態']);
+      const time = getField(record, ['time', '時間']);
+
+      return (
+        result === '成功' ||
+        result === '補卡' ||
+        result === '待審核' ||
+        result === '送審中' ||
+        status.indexOf('待審核') !== -1 ||
+        status.indexOf('送審中') !== -1 ||
+        isPendingMakeupDisplayTextV29Front(time)
+      );
+    }
+
+    function formatGroupedRecordsText(title, records) {
+      records = records || [];
+
+      records = records.filter(function (r) {
+        return recordShouldDisplayV29Front(r);
+      });
+
+      if (records.length === 0) {
+        return title + '\n\n目前沒有紀錄';
+      }
+
+      const map = {};
+
+      records.forEach(function (r) {
+        const date = getField(r, ['date', '日期']);
+        const store = getField(r, ['store', '分店']);
+        const type = getField(r, ['type', '類型', '動作']);
+        let time = getField(r, ['time', '時間']);
+        const result = getField(r, ['result', '狀態']);
+        const status = getField(r, ['status', '狀態']);
+
+        if (isPendingMakeupDisplayTextV29Front(time) || isPendingMakeupDisplayTextV29Front(result) || isPendingMakeupDisplayTextV29Front(status)) {
+          time = PENDING_MAKEUP_DISPLAY_TEXT_V29_FRONT;
+        }
+
+        const key = date + '_' + store;
+
+        if (!map[key]) {
+          map[key] = {
+            date: date,
+            store: store,
+            workIn: '',
+            breakStart: '',
+            breakEnd: '',
+            workOut: '',
+            result: result,
+            status: status,
+            hours: ''
+          };
+        }
+
+        if (type === '上班打卡') {
+          map[key].workIn = time;
+        } else if (type === '休息開始') {
+          map[key].breakStart = time;
+        } else if (type === '休息結束') {
+          map[key].breakEnd = time;
+        } else if (type === '下班打卡') {
+          map[key].workOut = time;
+        }
+      });
+
+      const days = Object.values(map);
+
+      days.sort(function (a, b) {
+        return String(b.date).localeCompare(String(a.date));
+      });
+
+      const workDaySet = new Set();
+      let totalHours = 0;
+
+      days.forEach(function (d) {
+        const hasPending =
+          isPendingMakeupDisplayTextV29Front(d.workIn) ||
+          isPendingMakeupDisplayTextV29Front(d.breakStart) ||
+          isPendingMakeupDisplayTextV29Front(d.breakEnd) ||
+          isPendingMakeupDisplayTextV29Front(d.workOut);
+
+        if (d.workIn || d.workOut) {
+          workDaySet.add(String(d.date || '').trim());
+        }
+
+        if (!hasPending && d.workIn && d.workOut) {
+          d.hours = calcWorkHours(d.workIn, d.workOut, d.breakStart, d.breakEnd);
+        } else {
+          d.hours = '';
+        }
+
+        const h = parseFloat(d.hours);
+
+        if (!isNaN(h)) {
+          totalHours += h;
+        }
+      });
+
+      const workDays = workDaySet.size;
+
+      let text =
+        title + '\n\n' +
+        '上班天數：' + workDays + ' 天\n' +
+        '總工時：' + formatHour(totalHours) + ' 小時\n\n';
+
+      days.forEach(function (d, index) {
+        text +=
+          (index + 1) + '. ' + (d.date || '-') + '\n' +
+          '分店：' + (d.store || '-') + '\n' +
+          '上班打卡：' + formatTime(d.workIn) + '\n' +
+          '休息開始：' + formatTime(d.breakStart) + '\n' +
+          '休息結束：' + formatTime(d.breakEnd) + '\n' +
+          '下班打卡：' + formatTime(d.workOut) + '\n' +
+          '工時：' + (d.hours !== '' ? formatHour(d.hours) + ' 小時' : '-') + '\n\n';
+      });
+
+      return text.trim();
+    }
+
+</script>
 
   <style>
     * {
@@ -1667,6 +1842,181 @@ const workDays = workDaySet.size;
       return text.trim();
     }
 
+
+
+
+    // =====================================================
+    // V29 前端保險：只要 API 回傳待審核/補卡待審核，就固定顯示完整文字
+    // =====================================================
+
+    const PENDING_MAKEUP_DISPLAY_TEXT_V29_FRONT = '待審核 (太久沒通過,請聯繫主管)';
+
+    function isPendingMakeupDisplayTextV29Front(value) {
+      const text = String(value || '').trim();
+
+      return (
+        text.indexOf('待審核') !== -1 ||
+        text.indexOf('送審中') !== -1 ||
+        text.indexOf('補卡待審核') !== -1 ||
+        text.indexOf('補卡送審中') !== -1 ||
+        text.indexOf('上班補卡待審核') !== -1
+      );
+    }
+
+    function formatTimeWithSeconds(timeText) {
+      const raw = String(timeText || '').trim();
+
+      if (isPendingMakeupDisplayTextV29Front(raw)) {
+        return PENDING_MAKEUP_DISPLAY_TEXT_V29_FRONT;
+      }
+
+      const parsed = parseTimeParts(raw);
+
+      if (!parsed) {
+        return '-';
+      }
+
+      const sec = parsed.s !== undefined && parsed.s !== null ? parsed.s : 0;
+      return pad2(parsed.h) + ':' + pad2(parsed.m) + ':' + pad2(sec);
+    }
+
+    function formatTime(timeText) {
+      const raw = String(timeText || '').trim();
+
+      if (isPendingMakeupDisplayTextV29Front(raw)) {
+        return PENDING_MAKEUP_DISPLAY_TEXT_V29_FRONT;
+      }
+
+      const parsed = parseTimeParts(raw);
+
+      if (!parsed) {
+        return '-';
+      }
+
+      return pad2(parsed.h) + ':' + pad2(parsed.m);
+    }
+
+    function recordShouldDisplayV29Front(record) {
+      const result = getField(record, ['result', '狀態']);
+      const status = getField(record, ['status', '狀態']);
+      const time = getField(record, ['time', '時間']);
+
+      return (
+        result === '成功' ||
+        result === '補卡' ||
+        result === '待審核' ||
+        result === '送審中' ||
+        status.indexOf('待審核') !== -1 ||
+        status.indexOf('送審中') !== -1 ||
+        isPendingMakeupDisplayTextV29Front(time)
+      );
+    }
+
+    function formatGroupedRecordsText(title, records) {
+      records = records || [];
+
+      records = records.filter(function (r) {
+        return recordShouldDisplayV29Front(r);
+      });
+
+      if (records.length === 0) {
+        return title + '\n\n目前沒有紀錄';
+      }
+
+      const map = {};
+
+      records.forEach(function (r) {
+        const date = getField(r, ['date', '日期']);
+        const store = getField(r, ['store', '分店']);
+        const type = getField(r, ['type', '類型', '動作']);
+        let time = getField(r, ['time', '時間']);
+        const result = getField(r, ['result', '狀態']);
+        const status = getField(r, ['status', '狀態']);
+
+        if (isPendingMakeupDisplayTextV29Front(time) || isPendingMakeupDisplayTextV29Front(result) || isPendingMakeupDisplayTextV29Front(status)) {
+          time = PENDING_MAKEUP_DISPLAY_TEXT_V29_FRONT;
+        }
+
+        const key = date + '_' + store;
+
+        if (!map[key]) {
+          map[key] = {
+            date: date,
+            store: store,
+            workIn: '',
+            breakStart: '',
+            breakEnd: '',
+            workOut: '',
+            result: result,
+            status: status,
+            hours: ''
+          };
+        }
+
+        if (type === '上班打卡') {
+          map[key].workIn = time;
+        } else if (type === '休息開始') {
+          map[key].breakStart = time;
+        } else if (type === '休息結束') {
+          map[key].breakEnd = time;
+        } else if (type === '下班打卡') {
+          map[key].workOut = time;
+        }
+      });
+
+      const days = Object.values(map);
+
+      days.sort(function (a, b) {
+        return String(b.date).localeCompare(String(a.date));
+      });
+
+      const workDaySet = new Set();
+      let totalHours = 0;
+
+      days.forEach(function (d) {
+        const hasPending =
+          isPendingMakeupDisplayTextV29Front(d.workIn) ||
+          isPendingMakeupDisplayTextV29Front(d.breakStart) ||
+          isPendingMakeupDisplayTextV29Front(d.breakEnd) ||
+          isPendingMakeupDisplayTextV29Front(d.workOut);
+
+        if (d.workIn || d.workOut) {
+          workDaySet.add(String(d.date || '').trim());
+        }
+
+        if (!hasPending && d.workIn && d.workOut) {
+          d.hours = calcWorkHours(d.workIn, d.workOut, d.breakStart, d.breakEnd);
+        } else {
+          d.hours = '';
+        }
+
+        const h = parseFloat(d.hours);
+
+        if (!isNaN(h)) {
+          totalHours += h;
+        }
+      });
+
+      const workDays = workDaySet.size;
+
+      let text =
+        title + '\n\n' +
+        '上班天數：' + workDays + ' 天\n' +
+        '總工時：' + formatHour(totalHours) + ' 小時\n\n';
+
+      days.forEach(function (d, index) {
+        text +=
+          (index + 1) + '. ' + (d.date || '-') + '\n' +
+          '分店：' + (d.store || '-') + '\n' +
+          '上班打卡：' + formatTime(d.workIn) + '\n' +
+          '休息開始：' + formatTime(d.breakStart) + '\n' +
+          '休息結束：' + formatTime(d.breakEnd) + '\n' +
+          '下班打卡：' + formatTime(d.workOut) + '\n' +
+          '工時：' + (d.hours !== '' ? formatHour(d.hours) + ' 小時' : '-') + '\n\n';
+      });
+
+      return text.trim();
+    }
 
 </script>
 </body>
