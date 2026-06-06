@@ -181,6 +181,132 @@
       return text.trim();
     }
 
+    // =====================================================
+    // V35：補卡重複待審核確認畫面修正
+    // 顯示 類型:時間，加入「取代 / 取消」按鈕
+    // 並保留剛才輸入的補卡資料，按取代時不會因表單消失而失敗
+    // =====================================================
+
+    let pendingMakeupReplacePayloadV35 = null;
+
+    function collectMakeupPayloadV35() {
+      const dateInput = document.getElementById('makeupDate');
+      const storeInput = document.getElementById('makeupStore');
+      const typeInput = document.getElementById('makeupType');
+      const timeInput = document.getElementById('makeupTime');
+      const reasonInput = document.getElementById('makeupReason');
+
+      if (dateInput || storeInput || typeInput || timeInput || reasonInput) {
+        return {
+          date: dateInput ? String(dateInput.value || '').replace(/-/g, '/') : '',
+          store: storeInput ? storeInput.value : '',
+          type: typeInput ? typeInput.value : '',
+          time: timeInput ? timeInput.value : '',
+          reason: reasonInput ? reasonInput.value.trim() : ''
+        };
+      }
+
+      return Object.assign({}, pendingMakeupReplacePayloadV35 || {});
+    }
+
+    function submitMakeupRequest(replacePending) {
+      replacePending = replacePending === true;
+
+      const payload = collectMakeupPayloadV35();
+      const date = payload.date || '';
+      const store = payload.store || '';
+      const type = payload.type || '';
+      const time = payload.time || '';
+      const reason = payload.reason || '';
+
+      if (!date || !store || !type || !time || !reason) {
+        setStatus('補卡資料不完整，請確認日期、分店、類型、時間與原因。');
+        return;
+      }
+
+      pendingMakeupReplacePayloadV35 = {
+        date: date,
+        store: store,
+        type: type,
+        time: time,
+        reason: reason
+      };
+
+      setButtons(false);
+      setStatus(replacePending ? '正在取代上一筆補卡申請...' : '正在送出補卡申請...');
+
+      apiCall({
+        action: 'submitMakeupRequest',
+        userId: lineUserId,
+        date: date,
+        store: store,
+        type: type,
+        time: time,
+        reason: reason,
+        replacePending: replacePending ? 'true' : 'false'
+      }, function (res) {
+        setButtons(true);
+
+        if (!res.ok) {
+          const msg = String(res.message || '');
+
+          if (
+            res.replaceRequired ||
+            res.code === 'REPLACE_PENDING_MAKEUP' ||
+            msg.indexOf('同類型補卡') !== -1 ||
+            msg.indexOf('取代剛才') !== -1
+          ) {
+            showReplacePendingMakeupConfirm(res || {});
+            return;
+          }
+
+          if (res.code === 'EXISTING_CLOCK_RECORD') {
+            showMakeupBlockedByExistingClock(res);
+            return;
+          }
+
+          if (msg.includes('尚未綁定')) {
+            showBindRequired('忘記打卡');
+          } else {
+            setStatus(res.message || '補卡申請送出失敗');
+          }
+          return;
+        }
+
+        pendingMakeupReplacePayloadV35 = null;
+        showMakeupSubmitted(res);
+      });
+    }
+
+    function showReplacePendingMakeupConfirm(res) {
+      const statusBox = document.getElementById('status');
+      const payload = Object.assign({}, pendingMakeupReplacePayloadV35 || {});
+
+      const displayName = res.name || lineDisplayName || '-';
+      const displayStore = res.store || payload.store || '-';
+      const displayDate = res.date || payload.date || '-';
+      const displayType = res.type || payload.type || '-';
+      const displayTime = formatTime(res.time || payload.time || '');
+      const displayReason = res.reason || payload.reason || '-';
+
+      statusBox.innerHTML =
+        '<div class="success-card">' +
+          '<div class="success-title">已有同類型補卡待審核</div>' +
+          '<div class="success-note">你已經有一筆同類型補卡正在待審核。\n\n' +
+          '是否要取代剛才的補卡申請？</div>' +
+          '<div class="success-list">' +
+            makeSuccessRowHtml('姓名', displayName) +
+            makeSuccessRowHtml('分店', displayStore) +
+            makeSuccessRowHtml('日期', displayDate) +
+            makeSuccessRowHtml('類型:時間', displayType + '：' + displayTime) +
+            makeSuccessRowHtml('原因', displayReason) +
+          '</div>' +
+          '<button class="btn-main" onclick="submitMakeupRequest(true)">取代</button>' +
+          '<button class="btn-outline" onclick="showMakeupPage()">取消</button>' +
+        '</div>';
+    }
+
+
 </script>
 
   <style>
@@ -2290,6 +2416,132 @@ const workDays = workDaySet.size;
             '<button class="btn-outline" onclick="showMakeupPage()">返回補卡頁面</button>' +
             '<button class="btn-secondary" onclick="closeLiffNow()">關閉畫面</button>' +
           '</div>' +
+        '</div>';
+    }
+
+
+    // =====================================================
+    // V35：補卡重複待審核確認畫面修正
+    // 顯示 類型:時間，加入「取代 / 取消」按鈕
+    // 並保留剛才輸入的補卡資料，按取代時不會因表單消失而失敗
+    // =====================================================
+
+    let pendingMakeupReplacePayloadV35 = null;
+
+    function collectMakeupPayloadV35() {
+      const dateInput = document.getElementById('makeupDate');
+      const storeInput = document.getElementById('makeupStore');
+      const typeInput = document.getElementById('makeupType');
+      const timeInput = document.getElementById('makeupTime');
+      const reasonInput = document.getElementById('makeupReason');
+
+      if (dateInput || storeInput || typeInput || timeInput || reasonInput) {
+        return {
+          date: dateInput ? String(dateInput.value || '').replace(/-/g, '/') : '',
+          store: storeInput ? storeInput.value : '',
+          type: typeInput ? typeInput.value : '',
+          time: timeInput ? timeInput.value : '',
+          reason: reasonInput ? reasonInput.value.trim() : ''
+        };
+      }
+
+      return Object.assign({}, pendingMakeupReplacePayloadV35 || {});
+    }
+
+    function submitMakeupRequest(replacePending) {
+      replacePending = replacePending === true;
+
+      const payload = collectMakeupPayloadV35();
+      const date = payload.date || '';
+      const store = payload.store || '';
+      const type = payload.type || '';
+      const time = payload.time || '';
+      const reason = payload.reason || '';
+
+      if (!date || !store || !type || !time || !reason) {
+        setStatus('補卡資料不完整，請確認日期、分店、類型、時間與原因。');
+        return;
+      }
+
+      pendingMakeupReplacePayloadV35 = {
+        date: date,
+        store: store,
+        type: type,
+        time: time,
+        reason: reason
+      };
+
+      setButtons(false);
+      setStatus(replacePending ? '正在取代上一筆補卡申請...' : '正在送出補卡申請...');
+
+      apiCall({
+        action: 'submitMakeupRequest',
+        userId: lineUserId,
+        date: date,
+        store: store,
+        type: type,
+        time: time,
+        reason: reason,
+        replacePending: replacePending ? 'true' : 'false'
+      }, function (res) {
+        setButtons(true);
+
+        if (!res.ok) {
+          const msg = String(res.message || '');
+
+          if (
+            res.replaceRequired ||
+            res.code === 'REPLACE_PENDING_MAKEUP' ||
+            msg.indexOf('同類型補卡') !== -1 ||
+            msg.indexOf('取代剛才') !== -1
+          ) {
+            showReplacePendingMakeupConfirm(res || {});
+            return;
+          }
+
+          if (res.code === 'EXISTING_CLOCK_RECORD') {
+            showMakeupBlockedByExistingClock(res);
+            return;
+          }
+
+          if (msg.includes('尚未綁定')) {
+            showBindRequired('忘記打卡');
+          } else {
+            setStatus(res.message || '補卡申請送出失敗');
+          }
+          return;
+        }
+
+        pendingMakeupReplacePayloadV35 = null;
+        showMakeupSubmitted(res);
+      });
+    }
+
+    function showReplacePendingMakeupConfirm(res) {
+      const statusBox = document.getElementById('status');
+      const payload = Object.assign({}, pendingMakeupReplacePayloadV35 || {});
+
+      const displayName = res.name || lineDisplayName || '-';
+      const displayStore = res.store || payload.store || '-';
+      const displayDate = res.date || payload.date || '-';
+      const displayType = res.type || payload.type || '-';
+      const displayTime = formatTime(res.time || payload.time || '');
+      const displayReason = res.reason || payload.reason || '-';
+
+      statusBox.innerHTML =
+        '<div class="success-card">' +
+          '<div class="success-title">已有同類型補卡待審核</div>' +
+          '<div class="success-note">你已經有一筆同類型補卡正在待審核。\n\n' +
+          '是否要取代剛才的補卡申請？</div>' +
+          '<div class="success-list">' +
+            makeSuccessRowHtml('姓名', displayName) +
+            makeSuccessRowHtml('分店', displayStore) +
+            makeSuccessRowHtml('日期', displayDate) +
+            makeSuccessRowHtml('類型:時間', displayType + '：' + displayTime) +
+            makeSuccessRowHtml('原因', displayReason) +
+          '</div>' +
+          '<button class="btn-main" onclick="submitMakeupRequest(true)">取代</button>' +
+          '<button class="btn-outline" onclick="showMakeupPage()">取消</button>' +
         '</div>';
     }
 
