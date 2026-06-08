@@ -2740,6 +2740,246 @@ const workDays = workDaySet.size;
       } catch (e) {}
     }, 500);
 
+
+    // =====================================================
+    // V45 最終覆蓋：補卡「重複待審核」一定跳取代確認
+    // 修正重點：
+    // 1. 不管後端回傳 ok:false 或 ok:true，只要有 replaceRequired / needReplace / REPLACE_PENDING_MAKEUP 就先跳取代畫面
+    // 2. 保留本次輸入資料，表單被替換後按「取代」仍能送出
+    // 3. 取代送出時補齊 replace / mode=replace 參數
+    // =====================================================
+
+    var FRONTEND_VERSION_V45 = 'V45_REPLACE_CONFIRM_FORCE';
+    var pendingMakeupReplacePayloadV45 = null;
+
+    function collectMakeupPayloadV45() {
+      const dateInput = document.getElementById('makeupDate');
+      const storeInput = document.getElementById('makeupStore');
+      const typeInput = document.getElementById('makeupType');
+      const timeInput = document.getElementById('makeupTime');
+      const reasonInput = document.getElementById('makeupReason');
+
+      if (dateInput || storeInput || typeInput || timeInput || reasonInput) {
+        return {
+          date: dateInput ? String(dateInput.value || '').replace(/-/g, '/') : '',
+          store: storeInput ? storeInput.value : '',
+          type: typeInput ? typeInput.value : '',
+          time: timeInput ? timeInput.value : '',
+          reason: reasonInput ? reasonInput.value.trim() : ''
+        };
+      }
+
+      return Object.assign(
+        {},
+        pendingMakeupReplacePayloadV45 ||
+        pendingMakeupReplacePayloadV40 ||
+        pendingMakeupReplacePayloadV35 ||
+        {}
+      );
+    }
+
+    function isReplaceRequiredResponseV45(res) {
+      res = res || {};
+      const msg = String(res.message || '');
+      const code = String(res.code || '');
+
+      return (
+        res.replaceRequired === true ||
+        res.needReplace === true ||
+        res.need_replace === true ||
+        res.needReplacePending === true ||
+        code === 'REPLACE_PENDING_MAKEUP' ||
+        code === 'MAKEUP_REPLACE_REQUIRED' ||
+        msg.indexOf('同類型補卡') !== -1 ||
+        msg.indexOf('待審核') !== -1 && msg.indexOf('取代') !== -1 ||
+        msg.indexOf('取代剛才') !== -1
+      );
+    }
+
+    function submitMakeupRequest(replacePending) {
+      replacePending = replacePending === true;
+
+      const payload = collectMakeupPayloadV45();
+      const date = payload.date || '';
+      const store = payload.store || '';
+      const type = payload.type || '';
+      const time = payload.time || '';
+      const reason = payload.reason || '';
+
+      if (!date || !store || !type || !time || !reason) {
+        setStatus('補卡資料不完整，請確認日期、分店、類型、時間與原因。');
+        return;
+      }
+
+      pendingMakeupReplacePayloadV45 = {
+        date: date,
+        store: store,
+        type: type,
+        time: time,
+        reason: reason
+      };
+
+      // 同步舊變數，避免舊函式仍被呼叫時資料消失
+      try {
+        pendingMakeupReplacePayloadV40 = Object.assign({}, pendingMakeupReplacePayloadV45);
+      } catch (e) {}
+      try {
+        pendingMakeupReplacePayloadV35 = Object.assign({}, pendingMakeupReplacePayloadV45);
+      } catch (e) {}
+
+      setButtons(false);
+      setStatus(replacePending ? '正在取代上一筆補卡申請...' : '正在送出補卡申請...');
+
+      apiCall({
+        action: 'submitMakeupRequest',
+        userId: lineUserId,
+        date: date,
+        store: store,
+        type: type,
+        time: time,
+        reason: reason,
+
+        // 多種名稱都送，避免 GAS 版本不同吃不到
+        replacePending: replacePending ? 'true' : 'false',
+        forceReplacePending: replacePending ? 'YES' : 'NO',
+        confirmReplace: replacePending ? 'true' : 'false',
+        replaceConfirm: replacePending ? 'true' : 'false',
+        overridePending: replacePending ? '1' : '0',
+        replace: replacePending ? '1' : '0',
+        mode: replacePending ? 'replace' : '',
+        frontendVersion: FRONTEND_VERSION_V45
+      }, function (res) {
+        setButtons(true);
+        res = res || {};
+
+        // 關鍵修正：不要只放在 if (!res.ok) 裡面。
+        // 有些 GAS 版本可能 ok:true 但同時帶 needReplace/replaceRequired。
+        if (isReplaceRequiredResponseV45(res)) {
+          if (replacePending) {
+            setStatus(
+              '取代失敗：後端仍要求取代確認。\n\n' +
+              '請確認 GAS 已重新部署新版 Web App，且目前 API_URL 指向新版部署網址。'
+            );
+            return;
+          }
+
+          showReplacePendingMakeupConfirm(res);
+          return;
+        }
+
+        if (!res.ok) {
+          if (res.code === 'EXISTING_CLOCK_RECORD') {
+            showMakeupBlockedByExistingClock(res);
+            return;
+          }
+
+          if (String(res.message || '').includes('尚未綁定')) {
+            showBindRequired('忘記打卡');
+          } else {
+            setStatus(res.message || '補卡申請送出失敗');
+          }
+          return;
+        }
+
+        pendingMakeupReplacePayloadV45 = null;
+        try { pendingMakeupReplacePayloadV40 = null; } catch (e) {}
+        try { pendingMakeupReplacePayloadV35 = null; } catch (e) {}
+
+        showMakeupSubmitted(res);
+      });
+    }
+
+    function showReplacePendingMakeupConfirm(res) {
+      const statusBox = document.getElementById('status');
+      const payload = Object.assign(
+        {},
+        pendingMakeupReplacePayloadV45 ||
+        pendingMakeupReplacePayloadV40 ||
+        pendingMakeupReplacePayloadV35 ||
+        {}
+      );
+
+      res = res || {};
+      const replaceInfo = res.replaceInfo || {};
+      const previous = replaceInfo.previous || {};
+      const current = replaceInfo.current || {};
+
+      const displayName = res.name || lineDisplayName || '-';
+      const displayStore = res.store || current.store || payload.store || '-';
+      const displayDate = current.date || res.currentDate || res.date || payload.date || '-';
+
+      const previousType =
+        previous.type ||
+        res.previousType ||
+        res.oldType ||
+        res.pendingType ||
+        res.type ||
+        payload.type ||
+        '-';
+
+      const previousTimeRaw =
+        previous.time ||
+        res.previousTime ||
+        res.oldTime ||
+        res.pendingTime ||
+        '';
+
+      const previousTime = previousTimeRaw ? formatTime(previousTimeRaw) : '未取得上一筆時間';
+
+      const currentType =
+        current.type ||
+        res.currentType ||
+        res.type ||
+        payload.type ||
+        '-';
+
+      const currentTimeRaw =
+        current.time ||
+        res.currentTime ||
+        res.time ||
+        payload.time ||
+        '';
+
+      const currentTime = currentTimeRaw ? formatTime(currentTimeRaw) : '-';
+
+      statusBox.innerHTML =
+        '<div class="success-card">' +
+          '<div class="success-title">已有同類型補卡待審核</div>' +
+          '<div class="success-note">你已經有一筆同類型補卡正在待審核。\n\n' +
+          '請確認是否要用「本次申請」取代「上一筆申請」。</div>' +
+          '<div class="success-list">' +
+            makeSuccessRowHtml('姓名', displayName) +
+            makeSuccessRowHtml('分店', displayStore) +
+            makeSuccessRowHtml('日期', displayDate) +
+            makeSuccessRowHtml('上一筆申請', previousType + '：' + (previousTime || '-')) +
+            makeSuccessRowHtml('本次申請(取代)', currentType + '：' + (currentTime || '-')) +
+          '</div>' +
+          '<button class="btn-main" onclick="confirmReplacePendingMakeupV45()">取代</button>' +
+          '<button class="btn-outline" onclick="cancelReplacePendingMakeupV45()">取消</button>' +
+        '</div>';
+    }
+
+    function confirmReplacePendingMakeupV45() {
+      submitMakeupRequest(true);
+    }
+
+    function cancelReplacePendingMakeupV45() {
+      pendingMakeupReplacePayloadV45 = null;
+      try { pendingMakeupReplacePayloadV40 = null; } catch (e) {}
+      try { pendingMakeupReplacePayloadV35 = null; } catch (e) {}
+      showMakeupPage();
+    }
+
+    setTimeout(function () {
+      try {
+        const footer = document.querySelector('.footer');
+        if (footer) {
+          footer.innerText = 'LIFF ID：2010226307-AZeYYFbb｜前端 V45';
+        }
+      } catch (e) {}
+    }, 500);
+
+
 </script>
 </body>
 </html>
