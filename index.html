@@ -2981,5 +2981,144 @@ const workDays = workDaySet.size;
 
 
 </script>
+
+<script>
+// =====================================================
+// 前端 V47：補卡取代按鈕強制送出 replaceAction
+// =====================================================
+var pendingMakeupReplacePayloadV47 = null;
+
+function collectMakeupPayloadV47() {
+  const dateInput = document.getElementById('makeupDate');
+  const storeInput = document.getElementById('makeupStore');
+  const typeInput = document.getElementById('makeupType');
+  const timeInput = document.getElementById('makeupTime');
+  const reasonInput = document.getElementById('makeupReason');
+
+  if (dateInput || storeInput || typeInput || timeInput || reasonInput) {
+    return {
+      date: dateInput ? String(dateInput.value || '').replace(/-/g, '/') : '',
+      store: storeInput ? storeInput.value : '',
+      type: typeInput ? typeInput.value : '',
+      time: timeInput ? timeInput.value : '',
+      reason: reasonInput ? reasonInput.value.trim() : ''
+    };
+  }
+
+  return Object.assign({}, pendingMakeupReplacePayloadV47 || pendingMakeupReplacePayloadV40 || pendingMakeupReplacePayloadV35 || {});
+}
+
+function submitMakeupRequest(replacePending) {
+  replacePending = replacePending === true;
+
+  const payload = collectMakeupPayloadV47();
+  const date = payload.date || '';
+  const store = payload.store || '';
+  const type = payload.type || '';
+  const time = payload.time || '';
+  const reason = payload.reason || '';
+
+  if (!date || !store || !type || !time || !reason) {
+    setStatus('補卡資料不完整，請確認日期、分店、類型、時間與原因。');
+    return;
+  }
+
+  pendingMakeupReplacePayloadV47 = {
+    date: date,
+    store: store,
+    type: type,
+    time: time,
+    reason: reason
+  };
+
+  setButtons(false);
+  setStatus(replacePending ? '正在取代上一筆補卡申請...' : '正在送出補卡申請...');
+
+  apiCall({
+    action: 'submitMakeupRequest',
+    userId: lineUserId,
+    date: date,
+    store: store,
+    type: type,
+    time: time,
+    reason: reason,
+    replacePending: replacePending ? 'true' : 'false',
+    forceReplacePending: replacePending ? 'YES' : 'NO',
+    confirmReplace: replacePending ? 'true' : 'false',
+    replaceConfirm: replacePending ? 'true' : 'false',
+    overridePending: replacePending ? '1' : '0',
+    replace: replacePending ? 'replace' : '',
+    mode: replacePending ? 'replace' : '',
+    replaceRequest: replacePending ? 'true' : 'false',
+    replaceAction: replacePending ? 'CONFIRM_REPLACE_V47' : '',
+    replaceToken: replacePending ? 'REPLACE_NOW_V47' : ''
+  }, function (res) {
+    setButtons(true);
+
+    const msg = String(res && res.message || '');
+    const needsReplace = !!(
+      res && (
+        res.replaceRequired ||
+        res.needReplace ||
+        res.code === 'REPLACE_PENDING_MAKEUP' ||
+        msg.indexOf('同類型補卡') !== -1 ||
+        msg.indexOf('取代剛才') !== -1
+      )
+    );
+
+    if (needsReplace) {
+      if (replacePending) {
+        setStatus(
+          '取代失敗：後端仍要求取代確認。\n\n' +
+          '目前前端已送出 replaceAction=CONFIRM_REPLACE_V47。\n' +
+          '請確認 GAS 已覆蓋 V47 並重新部署 Web App。\n\n' +
+          '後端版本：' + (res.backendPatch || res.debugVersion || '未回傳')
+        );
+        return;
+      }
+
+      showReplacePendingMakeupConfirm(res || {});
+      return;
+    }
+
+    if (!res || !res.ok) {
+      if (res && res.code === 'EXISTING_CLOCK_RECORD') {
+        showMakeupBlockedByExistingClock(res);
+        return;
+      }
+
+      if (msg.includes('尚未綁定')) {
+        showBindRequired('忘記打卡');
+      } else {
+        setStatus(msg || '補卡申請送出失敗');
+      }
+      return;
+    }
+
+    pendingMakeupReplacePayloadV47 = null;
+    if (typeof pendingMakeupReplacePayloadV40 !== 'undefined') pendingMakeupReplacePayloadV40 = null;
+    if (typeof pendingMakeupReplacePayloadV35 !== 'undefined') pendingMakeupReplacePayloadV35 = null;
+    showMakeupSubmitted(res);
+  });
+}
+
+function confirmReplacePendingMakeupV40() {
+  submitMakeupRequest(true);
+}
+
+function confirmReplacePendingMakeupV47() {
+  submitMakeupRequest(true);
+}
+
+setTimeout(function () {
+  try {
+    const footer = document.querySelector('.footer');
+    if (footer) {
+      footer.innerText = 'LIFF ID：2010226307-AZeYYFbb｜前端 V47';
+    }
+  } catch (e) {}
+}, 500);
+</script>
+
 </body>
 </html>
