@@ -3249,28 +3249,30 @@ setTimeout(function () {
 
 <script>
 // =====================================================
-// 前端 V51：主管代打卡頁面
+// 前端 V52：主管代打卡頁面
 // 網址：LIFF_URL?action=adminPunch
 // 只有 GAS 白名單內的主管 LINE userId 會看到表單。
-// V51：不取得主管定位，改由主管選擇分店、日期與時間。
+// V52：員工改成「姓名下拉選單」，不用手動複製 LINE userId。
 // =====================================================
 
-var handleRouteBeforeAdminProxyV51 = typeof handleRoute === 'function' ? handleRoute : null;
+var handleRouteBeforeAdminProxyV52 = typeof handleRoute === 'function' ? handleRoute : null;
+var adminProxyEmployeesV52 = [];
+var adminProxyStoresV52 = [];
 
 handleRoute = function () {
   const action = getUrlParam('action');
 
   if (action === 'adminPunch') {
-    showAdminProxyAccessGateV51();
+    showAdminProxyAccessGateV52();
     return;
   }
 
-  if (handleRouteBeforeAdminProxyV51) {
-    handleRouteBeforeAdminProxyV51();
+  if (handleRouteBeforeAdminProxyV52) {
+    handleRouteBeforeAdminProxyV52();
   }
 };
 
-function showAdminProxyAccessGateV51() {
+function showAdminProxyAccessGateV52() {
   hideAllBoxes();
 
   if (!lineUserId) {
@@ -3279,24 +3281,27 @@ function showAdminProxyAccessGateV51() {
   }
 
   setButtons(false);
-  setStatus('正在確認主管權限...');
+  setStatus('正在確認主管權限並讀取員工清單...');
 
   apiCall({
-    action: 'checkAdminProxyAccess',
+    action: 'getAdminProxyEmployees',
     adminUserId: lineUserId
   }, function (res) {
     setButtons(true);
 
     if (!res || !res.ok || !res.allowed) {
-      renderAdminProxyDeniedV51(res || {});
+      renderAdminProxyDeniedV52(res || {});
       return;
     }
 
-    renderAdminProxyFormV51();
+    adminProxyEmployeesV52 = Array.isArray(res.employees) ? res.employees : [];
+    adminProxyStoresV52 = Array.isArray(res.stores) ? res.stores : [];
+
+    renderAdminProxyFormV52();
   });
 }
 
-function renderAdminProxyDeniedV51(res) {
+function renderAdminProxyDeniedV52(res) {
   const statusBox = document.getElementById('status');
 
   statusBox.innerHTML =
@@ -3312,17 +3317,17 @@ function renderAdminProxyDeniedV51(res) {
     '</div>';
 }
 
-function adminProxyTodayInputV51() {
+function adminProxyTodayInputV52() {
   const d = new Date();
   return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
 }
 
-function adminProxyCurrentTimeInputV51() {
+function adminProxyCurrentTimeInputV52() {
   const d = new Date();
   return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
 }
 
-function renderAdminProxyFormV51() {
+function renderAdminProxyFormV52() {
   hideAllBoxes();
 
   const statusBox = document.getElementById('status');
@@ -3331,7 +3336,7 @@ function renderAdminProxyFormV51() {
   statusBox.innerHTML =
     '<div class="success-card">' +
       '<div class="success-title">主管代打卡</div>' +
-      '<div class="form-note">員工 LINE 帳號遇到 BUG 無法打卡時使用。此功能不檢查主管定位，會依照你選擇的分店、日期與時間寫入正式打卡紀錄。</div>' +
+      '<div class="form-note">員工 LINE 帳號遇到 BUG 無法打卡時使用。請直接選員工姓名，不用再找 LINE userId。此功能不檢查主管定位，會依照你選擇的分店、日期與時間寫入正式打卡紀錄。</div>' +
 
       '<div class="mini-title">主管</div>' +
       '<div class="success-list">' +
@@ -3339,19 +3344,18 @@ function renderAdminProxyFormV51() {
         makeSuccessRowHtml('主管 userId', lineUserId || '-') +
       '</div>' +
 
-      '<div class="mini-title">指定員工 LINE userId</div>' +
-      '<input id="adminProxyTargetUserIdV51" type="text" value="' + escapeHtml(presetTargetUserId) + '" placeholder="例如：Uxxxxxxxxxxxxxxxx">' +
+      '<div class="mini-title">搜尋員工</div>' +
+      '<input id="adminProxyEmployeeFilterV52" type="text" placeholder="輸入姓名 / 員工ID / 分店快速搜尋" oninput="adminProxyRenderEmployeeOptionsV52()">' +
+
+      '<div class="mini-title">選擇員工</div>' +
+      '<select id="adminProxyEmployeeSelectV52" onchange="adminProxyOnEmployeeChangedV52()"></select>' +
+      '<div id="adminProxyEmployeeInfoV52"></div>' +
 
       '<div class="mini-title">分店</div>' +
-      '<select id="adminProxyStoreV51">' +
-        '<option value="瑞豐店">瑞豐店</option>' +
-        '<option value="六合店">六合店</option>' +
-        '<option value="新堀江店">新堀江店</option>' +
-        '<option value="國華店">國華店</option>' +
-      '</select>' +
+      '<select id="adminProxyStoreV52"></select>' +
 
       '<div class="mini-title">打卡類型</div>' +
-      '<select id="adminProxyTypeV51">' +
+      '<select id="adminProxyTypeV52">' +
         '<option value="下班打卡">下班打卡</option>' +
         '<option value="上班打卡">上班打卡</option>' +
         '<option value="休息開始">休息開始</option>' +
@@ -3359,32 +3363,191 @@ function renderAdminProxyFormV51() {
       '</select>' +
 
       '<div class="mini-title">指定日期</div>' +
-      '<input id="adminProxyDateV51" type="date" value="' + escapeHtml(adminProxyTodayInputV51()) + '">' +
+      '<input id="adminProxyDateV52" type="date" value="' + escapeHtml(adminProxyTodayInputV52()) + '">' +
 
       '<div class="mini-title">指定時間</div>' +
-      '<input id="adminProxyTimeV51" type="time" value="' + escapeHtml(adminProxyCurrentTimeInputV51()) + '">' +
+      '<input id="adminProxyTimeV52" type="time" value="' + escapeHtml(adminProxyCurrentTimeInputV52()) + '">' +
 
       '<div class="mini-title">代打原因</div>' +
-      '<textarea id="adminProxyReasonV51" placeholder="例如：員工帳號 BUG，無法打卡下班">員工帳號 BUG，無法打卡</textarea>' +
+      '<textarea id="adminProxyReasonV52" placeholder="例如：員工帳號 BUG，無法打卡下班">員工帳號 BUG，無法打卡</textarea>' +
 
       '<div class="mini-title">主管密碼</div>' +
-      '<input id="adminProxyPinV51" type="password" placeholder="請輸入主管密碼">' +
+      '<input id="adminProxyPinV52" type="password" placeholder="請輸入主管密碼">' +
 
-      '<button class="btn-main" onclick="submitAdminProxyClockInV51()">送出正式代打卡</button>' +
+      '<button class="btn-main" onclick="submitAdminProxyClockInV52()">送出正式代打卡</button>' +
       '<button class="btn-outline" onclick="closeLiffNow()">關閉畫面</button>' +
     '</div>';
+
+  adminProxyRenderEmployeeOptionsV52(presetTargetUserId);
 }
 
-function submitAdminProxyClockInV51() {
-  const targetInput = document.getElementById('adminProxyTargetUserIdV51');
-  const storeInput = document.getElementById('adminProxyStoreV51');
-  const typeInput = document.getElementById('adminProxyTypeV51');
-  const dateInput = document.getElementById('adminProxyDateV51');
-  const timeInput = document.getElementById('adminProxyTimeV51');
-  const reasonInput = document.getElementById('adminProxyReasonV51');
-  const pinInput = document.getElementById('adminProxyPinV51');
+function adminProxyNormalizeSearchTextV52(value) {
+  return String(value || '').trim().toLowerCase();
+}
 
-  const targetUserId = targetInput ? String(targetInput.value || '').trim() : '';
+function adminProxyGetVisibleEmployeesV52() {
+  const input = document.getElementById('adminProxyEmployeeFilterV52');
+  const keyword = adminProxyNormalizeSearchTextV52(input ? input.value : '');
+
+  if (!keyword) {
+    return adminProxyEmployeesV52.slice();
+  }
+
+  return adminProxyEmployeesV52.filter(function(emp) {
+    const haystack = [
+      emp.name,
+      emp.employeeId,
+      emp.userId,
+      emp.allowedStores,
+      emp.position,
+      emp.label
+    ].map(function(v) {
+      return adminProxyNormalizeSearchTextV52(v);
+    }).join(' ');
+
+    return haystack.indexOf(keyword) !== -1;
+  });
+}
+
+function adminProxyRenderEmployeeOptionsV52(presetTargetUserId) {
+  const select = document.getElementById('adminProxyEmployeeSelectV52');
+
+  if (!select) return;
+
+  const employees = adminProxyGetVisibleEmployeesV52();
+  const preset = String(presetTargetUserId || '').trim();
+  let html = '';
+
+  if (adminProxyEmployeesV52.length === 0) {
+    html = '<option value="">目前沒有可代打卡的啟用員工</option>';
+    select.innerHTML = html;
+    adminProxyOnEmployeeChangedV52();
+    return;
+  }
+
+  if (employees.length === 0) {
+    html = '<option value="">搜尋不到員工</option>';
+    select.innerHTML = html;
+    adminProxyOnEmployeeChangedV52();
+    return;
+  }
+
+  html += '<option value="">請選擇員工</option>';
+
+  employees.forEach(function(emp) {
+    const label = (emp.name || '-') + '｜' + (emp.employeeId || '-') + '｜' + (emp.allowedStores || '全部');
+    const selected = preset && String(emp.userId || '').trim() === preset ? ' selected' : '';
+
+    html += '<option value="' + escapeHtml(emp.userId || '') + '"' + selected + '>' + escapeHtml(label) + '</option>';
+  });
+
+  select.innerHTML = html;
+
+  if (preset) {
+    const found = employees.some(function(emp) {
+      return String(emp.userId || '').trim() === preset;
+    });
+
+    if (!found) {
+      const infoBox = document.getElementById('adminProxyEmployeeInfoV52');
+      if (infoBox) {
+        infoBox.innerHTML =
+          '<div class="success-note">網址帶入的員工 userId 不在目前員工清單內：\n' + escapeHtml(preset) + '\n\n請直接改用姓名下拉選單選擇。</div>';
+      }
+    }
+  }
+
+  adminProxyOnEmployeeChangedV52();
+}
+
+function adminProxyFindEmployeeByUserIdV52(userId) {
+  const clean = String(userId || '').trim();
+
+  if (!clean) return null;
+
+  for (let i = 0; i < adminProxyEmployeesV52.length; i++) {
+    if (String(adminProxyEmployeesV52[i].userId || '').trim() === clean) {
+      return adminProxyEmployeesV52[i];
+    }
+  }
+
+  return null;
+}
+
+function adminProxyGetSelectedEmployeeV52() {
+  const select = document.getElementById('adminProxyEmployeeSelectV52');
+  const userId = select ? String(select.value || '').trim() : '';
+  return adminProxyFindEmployeeByUserIdV52(userId);
+}
+
+function adminProxySplitStoresV52(allowedStoresText) {
+  const text = String(allowedStoresText || '').trim();
+
+  if (!text || text === '全部') {
+    return adminProxyStoresV52.slice();
+  }
+
+  const stores = text
+    .split(/[，,、\n]/)
+    .map(function(s) { return String(s || '').trim(); })
+    .filter(function(s) { return !!s; });
+
+  return stores.length > 0 ? stores : adminProxyStoresV52.slice();
+}
+
+function adminProxyOnEmployeeChangedV52() {
+  const emp = adminProxyGetSelectedEmployeeV52();
+  const infoBox = document.getElementById('adminProxyEmployeeInfoV52');
+
+  if (infoBox) {
+    if (!emp) {
+      infoBox.innerHTML =
+        '<div class="success-note">請先選擇要代打卡的員工。</div>';
+    } else {
+      infoBox.innerHTML =
+        '<div class="success-list">' +
+          makeSuccessRowHtml('姓名', emp.name || '-') +
+          makeSuccessRowHtml('員工ID', emp.employeeId || '-') +
+          makeSuccessRowHtml('可打卡分店', emp.allowedStores || '全部') +
+          makeSuccessRowHtml('LINE userId', emp.userId || '-') +
+        '</div>';
+    }
+  }
+
+  adminProxyRefreshStoreOptionsV52(emp);
+}
+
+function adminProxyRefreshStoreOptionsV52(emp) {
+  const storeSelect = document.getElementById('adminProxyStoreV52');
+
+  if (!storeSelect) return;
+
+  let stores = emp ? adminProxySplitStoresV52(emp.allowedStores) : adminProxyStoresV52.slice();
+
+  if (!stores || stores.length === 0) {
+    stores = ['瑞豐店', '六合店', '新堀江店', '國華店'];
+  }
+
+  let html = '';
+
+  stores.forEach(function(store) {
+    html += '<option value="' + escapeHtml(store) + '">' + escapeHtml(store) + '</option>';
+  });
+
+  storeSelect.innerHTML = html;
+}
+
+function submitAdminProxyClockInV52() {
+  const emp = adminProxyGetSelectedEmployeeV52();
+  const employeeSelect = document.getElementById('adminProxyEmployeeSelectV52');
+  const storeInput = document.getElementById('adminProxyStoreV52');
+  const typeInput = document.getElementById('adminProxyTypeV52');
+  const dateInput = document.getElementById('adminProxyDateV52');
+  const timeInput = document.getElementById('adminProxyTimeV52');
+  const reasonInput = document.getElementById('adminProxyReasonV52');
+  const pinInput = document.getElementById('adminProxyPinV52');
+
+  const targetUserId = employeeSelect ? String(employeeSelect.value || '').trim() : '';
   const store = storeInput ? String(storeInput.value || '').trim() : '';
   const type = typeInput ? String(typeInput.value || '').trim() : '';
   const date = dateInput ? String(dateInput.value || '').replace(/-/g, '/') : '';
@@ -3392,8 +3555,8 @@ function submitAdminProxyClockInV51() {
   const reason = reasonInput ? String(reasonInput.value || '').trim() : '';
   const adminPin = pinInput ? String(pinInput.value || '').trim() : '';
 
-  if (!targetUserId) {
-    setStatus('請輸入指定員工 LINE userId。');
+  if (!targetUserId || !emp) {
+    setStatus('請先從下拉選單選擇員工姓名。');
     return;
   }
 
@@ -3430,7 +3593,8 @@ function submitAdminProxyClockInV51() {
   setButtons(false);
   setStatus(
     '正在送出主管代打卡...\n\n' +
-    '員工 userId：' + targetUserId + '\n' +
+    '員工：' + (emp.name || '-') + '\n' +
+    '員工ID：' + (emp.employeeId || '-') + '\n' +
     '分店：' + store + '\n' +
     '類型：' + type + '\n' +
     '時間：' + date + ' ' + time + '\n\n' +
@@ -3451,15 +3615,15 @@ function submitAdminProxyClockInV51() {
     setButtons(true);
 
     if (!res || !res.ok) {
-      showAdminProxyFailedV51(res || {});
+      showAdminProxyFailedV52(res || {});
       return;
     }
 
-    showAdminProxySuccessV51(res, type, reason);
+    showAdminProxySuccessV52(res, type, reason);
   });
 }
 
-function showAdminProxyFailedV51(res) {
+function showAdminProxyFailedV52(res) {
   const statusBox = document.getElementById('status');
   const msg = String(res.message || '主管代打卡失敗');
 
@@ -3468,11 +3632,11 @@ function showAdminProxyFailedV51(res) {
       '<div class="status-blocked-icon">❌</div>' +
       '<div class="status-blocked-title">代打卡失敗</div>' +
       '<div class="status-blocked-message">' + escapeHtml(msg) + '</div>' +
-      '<button class="btn-outline" onclick="renderAdminProxyFormV51()">重新輸入</button>' +
+      '<button class="btn-outline" onclick="renderAdminProxyFormV52()">重新輸入</button>' +
     '</div>';
 }
 
-function showAdminProxySuccessV51(res, type, reason) {
+function showAdminProxySuccessV52(res, type, reason) {
   const statusBox = document.getElementById('status');
   const shift = res.shiftRecord || {};
 
@@ -3483,7 +3647,7 @@ function showAdminProxySuccessV51(res, type, reason) {
       '<div class="success-time">' + escapeHtml(formatTimeWithSeconds(res.time || '')) + '</div>' +
       '<div class="success-list">' +
         makeSuccessRowHtml('員工姓名', res.name || '-') +
-        makeSuccessRowHtml('指定 userId', res.targetUserId || '-') +
+        makeSuccessRowHtml('員工ID', res.employeeId || '-') +
         makeSuccessRowHtml('類型', res.type || type || '-') +
         makeSuccessRowHtml('分店', res.store || '-') +
         makeSuccessRowHtml('日期', res.date || '-') +
@@ -3496,7 +3660,8 @@ function showAdminProxySuccessV51(res, type, reason) {
         makeSuccessRowHtml('休息結束', formatTimeWithSeconds(shift.breakEnd || '')) +
         makeSuccessRowHtml('下班打卡', formatTimeWithSeconds(shift.workOut || '')) +
       '</div>' +
-      '<div class="success-note">此筆已依指定分店與指定日期時間寫入正式打卡紀錄，並已寫入「主管代打卡紀錄」稽核分頁。</div>' +
+      '<div class="success-note">此筆已依指定員工、指定分店與指定日期時間寫入正式打卡紀錄，並已寫入「主管代打卡紀錄」稽核分頁。</div>' +
+      '<button class="btn-main" onclick="renderAdminProxyFormV52()">再代打一筆</button>' +
       '<button class="btn-secondary" onclick="closeLiffNow()">關閉畫面</button>' +
     '</div>';
 }
@@ -3505,7 +3670,7 @@ setTimeout(function () {
   try {
     const footer = document.querySelector('.footer');
     if (footer) {
-      footer.innerText = 'LIFF ID：2010226307-AZeYYFbb｜前端 V51 主管代打卡';
+      footer.innerText = 'LIFF ID：2010226307-AZeYYFbb｜前端 V52 主管代打卡';
     }
   } catch (e) {}
 }, 500);
