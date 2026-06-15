@@ -3676,228 +3676,230 @@ setTimeout(function () {
 }, 500);
 
 // =====================================================
-// V54 雛型：忘記打卡頁面加入「待審核」入口
+// V55 修正版：避免 handleRoute 遞迴造成 Maximum call stack size exceeded
+// 忘記打卡頁面加入「待審核」入口
 // 權限：員工資料 E 欄「職位」包含「主管」或「開發者」才顯示。
 // =====================================================
+(function () {
+  var originalHandleRouteV55 = window.handleRoute;
 
-var handleRouteBeforePendingReviewV54 = typeof handleRoute === 'function' ? handleRoute : null;
+  window.handleRoute = function () {
+    const action = getUrlParam('action');
 
-function handleRoute() {
-  const action = getUrlParam('action');
-
-  if (action === 'pendingReview' || action === 'supervisorApproval' || action === 'makeupApproval' || action === 'reviewMakeup') {
-    showPendingReviewPageV54();
-    return;
-  }
-
-  if (handleRouteBeforePendingReviewV54) {
-    handleRouteBeforePendingReviewV54();
-  }
-}
-
-function isReviewerEmployeeV54(employee) {
-  if (!employee) return false;
-
-  const position = String(employee.position || '').trim();
-  const isSupervisor = String(employee.isSupervisor || '').toLowerCase();
-
-  return (
-    position.indexOf('主管') !== -1 ||
-    position.indexOf('開發者') !== -1 ||
-    isSupervisor === 'true' ||
-    isSupervisor === '1' ||
-    isSupervisor === 'yes'
-  );
-}
-
-function renderMakeupForm(employee) {
-  const statusBox = document.getElementById('status');
-  const today = getTodaySheetDate();
-  const nowTime = getCurrentTimeText();
-  const canReview = isReviewerEmployeeV54(employee);
-
-  const reviewButtonHtml = canReview
-    ? '<button class="btn-outline" onclick="showPendingReviewPageV54()">待審核</button>'
-    : '';
-
-  statusBox.innerHTML =
-    '<div class="success-card">' +
-      '<div class="success-title">忘記打卡 / 補卡申請</div>' +
-      (canReview ? '<div class="success-note">你目前是主管 / 開發者權限，可查看待審核補卡。</div>' : '') +
-      reviewButtonHtml +
-      '<div class="form-note">送出後會進入主管審核。審核通過後才會正式寫入打卡紀錄。</div>' +
-      '<div class="mini-title">補卡日期</div>' +
-      '<input id="makeupDate" type="date" value="' + escapeHtml(today.replace(/\//g, '-')) + '">' +
-      '<div class="mini-title">分店</div>' +
-      '<select id="makeupStore">' +
-        '<option value="瑞豐店">瑞豐店</option>' +
-        '<option value="六合店">六合店</option>' +
-        '<option value="新堀江店">新堀江店</option>' +
-      '</select>' +
-      '<div class="mini-title">補卡類型</div>' +
-      '<select id="makeupType">' +
-        '<option value="上班">上班</option>' +
-        '<option value="休息開始">休息開始</option>' +
-        '<option value="休息結束">休息結束</option>' +
-        '<option value="下班">下班</option>' +
-      '</select>' +
-      '<div class="mini-title">補卡時間</div>' +
-      '<input id="makeupTime" type="time" value="' + escapeHtml(nowTime) + '">' +
-      '<div class="mini-title">原因</div>' +
-      '<textarea id="makeupReason" placeholder="請輸入原因">忘記打卡</textarea>' +
-      '<button class="btn-main" onclick="submitMakeupRequest()">送出補卡申請</button>' +
-      '<button class="btn-secondary" onclick="closeLiffNow()">關閉畫面</button>' +
-    '</div>';
-}
-
-function showPendingReviewPageV54() {
-  if (!lineUserId) {
-    setStatus('尚未取得 LINE userId，請重新開啟頁面');
-    return;
-  }
-
-  hideAllBoxes();
-  setButtons(false);
-  setStatus('正在讀取待審核補卡...');
-
-  apiCall({
-    action: 'getPendingMakeupRequests',
-    userId: lineUserId
-  }, function (res) {
-    setButtons(true);
-
-    if (!res || !res.ok) {
-      renderPendingReviewDeniedV54(res || {});
+    if (action === 'pendingReview' || action === 'supervisorApproval' || action === 'makeupApproval' || action === 'reviewMakeup') {
+      window.showPendingReviewPageV55();
       return;
     }
 
-    renderPendingReviewListV54(res.requests || [], res);
-  });
-}
+    if (typeof originalHandleRouteV55 === 'function') {
+      originalHandleRouteV55.call(window);
+    }
+  };
 
-function renderPendingReviewDeniedV54(res) {
-  const statusBox = document.getElementById('status');
-  const msg = String(res.message || '沒有待審核查看權限。');
+  window.isReviewerEmployeeV55 = function (employee) {
+    if (!employee) return false;
 
-  statusBox.innerHTML =
-    '<div class="status-blocked">' +
-      '<div class="status-blocked-icon">❌</div>' +
-      '<div class="status-blocked-title">無法查看待審核</div>' +
-      '<div class="status-blocked-message">' + escapeHtml(msg) + '</div>' +
-      '<button class="btn-outline" onclick="showMakeupPage()">返回忘記打卡</button>' +
-    '</div>';
-}
+    const position = String(employee.position || '').trim();
+    const isSupervisor = String(employee.isSupervisor || '').toLowerCase();
 
-function renderPendingReviewListV54(requests, res) {
-  const statusBox = document.getElementById('status');
-  requests = Array.isArray(requests) ? requests : [];
+    return (
+      position.indexOf('主管') !== -1 ||
+      position.indexOf('開發者') !== -1 ||
+      isSupervisor === 'true' ||
+      isSupervisor === '1' ||
+      isSupervisor === 'yes'
+    );
+  };
 
-  let html =
-    '<div class="success-card">' +
-      '<div class="success-title">待審核</div>' +
-      '<div class="form-note">這裡會列出員工補卡申請。按「通過」後，系統會正式寫入打卡紀錄與每日彙整。</div>' +
-      '<button class="btn-outline" onclick="showMakeupPage()">返回補卡申請</button>' +
-      '<button class="btn-outline" onclick="showPendingReviewPageV54()">重新整理</button>';
+  window.renderMakeupForm = function (employee) {
+    const statusBox = document.getElementById('status');
+    const today = getTodaySheetDate();
+    const nowTime = getCurrentTimeText();
+    const canReview = window.isReviewerEmployeeV55(employee);
 
-  if (requests.length === 0) {
+    const reviewButtonHtml = canReview
+      ? '<button class="btn-outline" onclick="showPendingReviewPageV55()">待審核</button>'
+      : '';
+
+    statusBox.innerHTML =
+      '<div class="success-card">' +
+        '<div class="success-title">忘記打卡 / 補卡申請</div>' +
+        (canReview ? '<div class="success-note">你目前是主管 / 開發者權限，可查看待審核補卡。</div>' : '') +
+        reviewButtonHtml +
+        '<div class="form-note">送出後會進入主管審核。審核通過後才會正式寫入打卡紀錄。</div>' +
+        '<div class="mini-title">補卡日期</div>' +
+        '<input id="makeupDate" type="date" value="' + escapeHtml(today.replace(/\//g, '-')) + '">' +
+        '<div class="mini-title">分店</div>' +
+        '<select id="makeupStore">' +
+          '<option value="瑞豐店">瑞豐店</option>' +
+          '<option value="六合店">六合店</option>' +
+          '<option value="新堀江店">新堀江店</option>' +
+        '</select>' +
+        '<div class="mini-title">補卡類型</div>' +
+        '<select id="makeupType">' +
+          '<option value="上班">上班</option>' +
+          '<option value="休息開始">休息開始</option>' +
+          '<option value="休息結束">休息結束</option>' +
+          '<option value="下班">下班</option>' +
+        '</select>' +
+        '<div class="mini-title">補卡時間</div>' +
+        '<input id="makeupTime" type="time" value="' + escapeHtml(nowTime) + '">' +
+        '<div class="mini-title">原因</div>' +
+        '<textarea id="makeupReason" placeholder="請輸入原因">忘記打卡</textarea>' +
+        '<button class="btn-main" onclick="submitMakeupRequest()">送出補卡申請</button>' +
+        '<button class="btn-secondary" onclick="closeLiffNow()">關閉畫面</button>' +
+      '</div>';
+  };
+
+  window.showPendingReviewPageV55 = function () {
+    if (!lineUserId) {
+      setStatus('尚未取得 LINE userId，請重新開啟頁面');
+      return;
+    }
+
+    hideAllBoxes();
+    setButtons(false);
+    setStatus('正在讀取待審核補卡...');
+
+    apiCall({
+      action: 'getPendingMakeupRequests',
+      userId: lineUserId
+    }, function (res) {
+      setButtons(true);
+
+      if (!res || !res.ok) {
+        window.renderPendingReviewDeniedV55(res || {});
+        return;
+      }
+
+      window.renderPendingReviewListV55(res.requests || [], res);
+    });
+  };
+
+  window.renderPendingReviewDeniedV55 = function (res) {
+    const statusBox = document.getElementById('status');
+    const msg = String(res.message || '沒有待審核查看權限。');
+
+    statusBox.innerHTML =
+      '<div class="status-blocked">' +
+        '<div class="status-blocked-icon">❌</div>' +
+        '<div class="status-blocked-title">無法查看待審核</div>' +
+        '<div class="status-blocked-message">' + escapeHtml(msg) + '</div>' +
+        '<button class="btn-outline" onclick="showMakeupPage()">返回忘記打卡</button>' +
+      '</div>';
+  };
+
+  window.renderPendingReviewListV55 = function (requests, res) {
+    const statusBox = document.getElementById('status');
+    requests = Array.isArray(requests) ? requests : [];
+
+    let html =
+      '<div class="success-card">' +
+        '<div class="success-title">待審核</div>' +
+        '<div class="form-note">這裡會列出員工補卡申請。按「通過」後，系統會正式寫入打卡紀錄與每日彙整。</div>' +
+        '<button class="btn-outline" onclick="showMakeupPage()">返回補卡申請</button>' +
+        '<button class="btn-outline" onclick="showPendingReviewPageV55()">重新整理</button>';
+
+    if (requests.length === 0) {
+      html +=
+        '<div class="success-note">目前沒有待審核補卡。</div>' +
+        '<button class="btn-secondary" onclick="closeLiffNow()">關閉畫面</button>' +
+      '</div>';
+
+      statusBox.innerHTML = html;
+      return;
+    }
+
+    requests.forEach(function (item, index) {
+      const rowIndex = String(item.rowIndex || '').trim();
+      const title = (index + 1) + '. ' + (item.name || '-') + '｜' + (item.type || '-') + ' ' + formatTime(item.time || '');
+
+      html +=
+        '<div class="success-list" style="text-align:left;">' +
+          '<div class="mini-title">' + escapeHtml(title) + '</div>' +
+          makeSuccessRowHtml('申請時間', item.requestTime || '-') +
+          makeSuccessRowHtml('員工', item.name || '-') +
+          makeSuccessRowHtml('分店', item.store || '-') +
+          makeSuccessRowHtml('日期', item.date || '-') +
+          makeSuccessRowHtml('類型', item.type || '-') +
+          makeSuccessRowHtml('時間', formatTime(item.time || '')) +
+          makeSuccessRowHtml('原因', item.reason || '-') +
+          makeSuccessRowHtml('狀態', item.status || '-') +
+          '<button class="btn-main" onclick="approvePendingMakeupV55(' + escapeHtml(rowIndex) + ')">通過</button>' +
+        '</div>';
+    });
+
     html +=
-      '<div class="success-note">目前沒有待審核補卡。</div>' +
-      '<button class="btn-secondary" onclick="closeLiffNow()">關閉畫面</button>' +
-    '</div>';
+        '<button class="btn-secondary" onclick="closeLiffNow()">關閉畫面</button>' +
+      '</div>';
 
     statusBox.innerHTML = html;
-    return;
-  }
+  };
 
-  requests.forEach(function (item, index) {
-    const rowIndex = String(item.rowIndex || '').trim();
-    const title = (index + 1) + '. ' + (item.name || '-') + '｜' + (item.type || '-') + ' ' + formatTime(item.time || '');
+  window.approvePendingMakeupV55 = function (rowIndex) {
+    rowIndex = String(rowIndex || '').trim();
 
-    html +=
-      '<div class="success-list" style="text-align:left;">' +
-        '<div class="mini-title">' + escapeHtml(title) + '</div>' +
-        makeSuccessRowHtml('申請時間', item.requestTime || '-') +
-        makeSuccessRowHtml('員工', item.name || '-') +
-        makeSuccessRowHtml('分店', item.store || '-') +
-        makeSuccessRowHtml('日期', item.date || '-') +
-        makeSuccessRowHtml('類型', item.type || '-') +
-        makeSuccessRowHtml('時間', formatTime(item.time || '')) +
-        makeSuccessRowHtml('原因', item.reason || '-') +
-        makeSuccessRowHtml('狀態', item.status || '-') +
-        '<button class="btn-main" onclick="approvePendingMakeupV54(' + escapeHtml(rowIndex) + ')">通過</button>' +
-      '</div>';
-  });
-
-  html +=
-      '<button class="btn-secondary" onclick="closeLiffNow()">關閉畫面</button>' +
-    '</div>';
-
-  statusBox.innerHTML = html;
-}
-
-function approvePendingMakeupV54(rowIndex) {
-  rowIndex = String(rowIndex || '').trim();
-
-  if (!rowIndex) {
-    setStatus('找不到要通過的補卡資料。');
-    return;
-  }
-
-  if (!confirm('確定通過這筆補卡嗎？\n通過後會正式寫入打卡紀錄。')) {
-    return;
-  }
-
-  setButtons(false);
-  setStatus('正在通過補卡...');
-
-  apiCall({
-    action: 'approvePendingMakeupRequest',
-    userId: lineUserId,
-    rowIndex: rowIndex
-  }, function (res) {
-    setButtons(true);
-
-    if (!res || !res.ok) {
-      renderPendingReviewResultV54(false, res || {});
+    if (!rowIndex) {
+      setStatus('找不到要通過的補卡資料。');
       return;
     }
 
-    renderPendingReviewResultV54(true, res);
-  });
-}
-
-function renderPendingReviewResultV54(ok, res) {
-  const statusBox = document.getElementById('status');
-  const title = ok ? '補卡已通過' : '通過失敗';
-  const icon = ok ? '✓' : '❌';
-  const message = String(res.message || (ok ? '補卡已成功套用。' : '補卡通過失敗。'));
-
-  statusBox.innerHTML =
-    '<div class="success-card">' +
-      '<div class="success-icon">' + icon + '</div>' +
-      '<div class="success-title">' + escapeHtml(title) + '</div>' +
-      '<div class="success-note">' + escapeHtml(message) + '</div>' +
-      '<div class="success-list">' +
-        makeSuccessRowHtml('員工', res.name || '-') +
-        makeSuccessRowHtml('分店', res.store || '-') +
-        makeSuccessRowHtml('日期', res.date || '-') +
-        makeSuccessRowHtml('類型', res.type || '-') +
-        makeSuccessRowHtml('時間', formatTime(res.time || '')) +
-        makeSuccessRowHtml('狀態', res.status || '-') +
-      '</div>' +
-      '<button class="btn-main" onclick="showPendingReviewPageV54()">回待審核</button>' +
-      '<button class="btn-outline" onclick="showMakeupPage()">返回補卡申請</button>' +
-    '</div>';
-}
-
-setTimeout(function () {
-  try {
-    const footer = document.querySelector('.footer');
-    if (footer) {
-      footer.innerText = 'LIFF ID：2010226307-AZeYYFbb｜前端 V54 待審核雛型';
+    if (!confirm('確定通過這筆補卡嗎？\n通過後會正式寫入打卡紀錄。')) {
+      return;
     }
-  } catch (e) {}
-}, 700);
+
+    setButtons(false);
+    setStatus('正在通過補卡...');
+
+    apiCall({
+      action: 'approvePendingMakeupRequest',
+      userId: lineUserId,
+      rowIndex: rowIndex
+    }, function (res) {
+      setButtons(true);
+
+      if (!res || !res.ok) {
+        window.renderPendingReviewResultV55(false, res || {});
+        return;
+      }
+
+      window.renderPendingReviewResultV55(true, res);
+    });
+  };
+
+  window.renderPendingReviewResultV55 = function (ok, res) {
+    const statusBox = document.getElementById('status');
+    const title = ok ? '補卡已通過' : '通過失敗';
+    const icon = ok ? '✓' : '❌';
+    const message = String(res.message || (ok ? '補卡已成功套用。' : '補卡通過失敗。'));
+
+    statusBox.innerHTML =
+      '<div class="success-card">' +
+        '<div class="success-icon">' + icon + '</div>' +
+        '<div class="success-title">' + escapeHtml(title) + '</div>' +
+        '<div class="success-note">' + escapeHtml(message) + '</div>' +
+        '<div class="success-list">' +
+          makeSuccessRowHtml('員工', res.name || '-') +
+          makeSuccessRowHtml('分店', res.store || '-') +
+          makeSuccessRowHtml('日期', res.date || '-') +
+          makeSuccessRowHtml('類型', res.type || '-') +
+          makeSuccessRowHtml('時間', formatTime(res.time || '')) +
+          makeSuccessRowHtml('狀態', res.status || '-') +
+        '</div>' +
+        '<button class="btn-main" onclick="showPendingReviewPageV55()">回待審核</button>' +
+        '<button class="btn-outline" onclick="showMakeupPage()">返回補卡申請</button>' +
+      '</div>';
+  };
+
+  setTimeout(function () {
+    try {
+      const footer = document.querySelector('.footer');
+      if (footer) {
+        footer.innerText = 'LIFF ID：2010226307-AZeYYFbb｜前端 V55 待審核修正版';
+      }
+    } catch (e) {}
+  }, 700);
+})();
 
 </script>
 
