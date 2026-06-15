@@ -3718,13 +3718,13 @@ setTimeout(function () {
     const canReview = window.isReviewerEmployeeV55(employee);
 
     const reviewButtonHtml = canReview
-      ? '<button class="btn-outline" onclick="showPendingReviewPageV55()">待審核</button>'
+      ? '<button class="btn-outline" onclick="showPendingReviewPageV55()">補卡待審核</button>'
       : '';
 
     statusBox.innerHTML =
       '<div class="success-card">' +
         '<div class="success-title">忘記打卡 / 補卡申請</div>' +
-        (canReview ? '<div class="success-note">你目前是主管 / 開發者權限，\n可查看待審核補卡。</div>' : '') +
+        (canReview ? '<div class="success-note">你目前是主管 / 開發者權限，可查看待審核補卡。</div>' : '') +
         reviewButtonHtml +
         '<div class="form-note">送出後會進入主管審核。審核通過後才會正式寫入打卡紀錄。</div>' +
         '<div class="mini-title">補卡日期</div>' +
@@ -3795,7 +3795,7 @@ setTimeout(function () {
 
     let html =
       '<div class="success-card">' +
-        '<div class="success-title">待審核</div>' +
+        '<div class="success-title">員工忘記打卡 待審核</div>' +
         '<div class="form-note">這裡會列出員工補卡申請。按「通過」後，系統會正式寫入打卡紀錄與每日彙整。</div>' +
         '<button class="btn-outline" onclick="showMakeupPage()">返回補卡申請</button>' +
         '<button class="btn-outline" onclick="showPendingReviewPageV55()">重新整理</button>';
@@ -3895,7 +3895,7 @@ setTimeout(function () {
     try {
       const footer = document.querySelector('.footer');
       if (footer) {
-        footer.innerText = 'LIFF ID：2010226307-AZeYYFbb｜前端 V55 待審核修正版';
+        footer.innerText = 'LIFF ID：2010226307-AZeYYFbb｜前端 V56 待審核文字調整版';
       }
     } catch (e) {}
   }, 700);
