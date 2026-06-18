@@ -3903,5 +3903,268 @@ setTimeout(function () {
 
 </script>
 
+<script>
+// =====================================================
+// 前端 V57：主管模式新增「新進員工」預先登記
+// 位置：忘記打卡 / 補卡申請頁面，補卡待審核按鈕下面
+// 邏輯：主管/開發者可填 姓名、員工ID、分店，寫入 Google 試算表「員工資料」
+// 新員工之後仍需第一次 LINE 登入，輸入員工ID 綁定 LINE userId。
+// =====================================================
+(function () {
+  var originalHandleRouteV57 = window.handleRoute;
+
+  window.handleRoute = function () {
+    const action = getUrlParam('action');
+
+    if (action === 'newEmployee' || action === 'newStaff' || action === 'createEmployee') {
+      window.showNewEmployeePageV57();
+      return;
+    }
+
+    if (typeof originalHandleRouteV57 === 'function') {
+      originalHandleRouteV57.call(window);
+    }
+  };
+
+  window.canUseNewEmployeeV57 = function (employee) {
+    if (typeof window.isReviewerEmployeeV55 === 'function') {
+      return window.isReviewerEmployeeV55(employee);
+    }
+
+    if (!employee) return false;
+
+    const position = String(employee.position || '').trim();
+    const isSupervisor = String(employee.isSupervisor || '').toLowerCase();
+
+    return (
+      position.indexOf('主管') !== -1 ||
+      position.indexOf('開發者') !== -1 ||
+      isSupervisor === 'true' ||
+      isSupervisor === '1' ||
+      isSupervisor === 'yes'
+    );
+  };
+
+  // 覆蓋忘記打卡頁：在「補卡待審核」下面加「新進員工」
+  window.renderMakeupForm = function (employee) {
+    const statusBox = document.getElementById('status');
+    const today = getTodaySheetDate();
+    const nowTime = getCurrentTimeText();
+    const canReview = window.canUseNewEmployeeV57(employee);
+
+    const reviewButtonHtml = canReview
+      ? '<button class="btn-outline" onclick="showPendingReviewPageV55()">補卡待審核</button>'
+      : '';
+
+    const newEmployeeButtonHtml = canReview
+      ? '<button class="btn-outline" onclick="showNewEmployeePageV57()">新進員工</button>'
+      : '';
+
+    statusBox.innerHTML =
+      '<div class="success-card">' +
+        '<div class="success-title">忘記打卡 / 補卡申請</div>' +
+        (canReview ? '<div class="success-note">你目前是主管 / 開發者權限，可查看待審核補卡，也可以預先登記新進員工。</div>' : '') +
+        reviewButtonHtml +
+        newEmployeeButtonHtml +
+        '<div class="form-note">送出後會進入主管審核。審核通過後才會正式寫入打卡紀錄。</div>' +
+        '<div class="mini-title">補卡日期</div>' +
+        '<input id="makeupDate" type="date" value="' + escapeHtml(today.replace(/\//g, '-')) + '">' +
+        '<div class="mini-title">分店</div>' +
+        '<select id="makeupStore">' +
+          '<option value="瑞豐店">瑞豐店</option>' +
+          '<option value="六合店">六合店</option>' +
+          '<option value="新堀江店">新堀江店</option>' +
+        '</select>' +
+        '<div class="mini-title">補卡類型</div>' +
+        '<select id="makeupType">' +
+          '<option value="上班">上班</option>' +
+          '<option value="休息開始">休息開始</option>' +
+          '<option value="休息結束">休息結束</option>' +
+          '<option value="下班">下班</option>' +
+        '</select>' +
+        '<div class="mini-title">補卡時間</div>' +
+        '<input id="makeupTime" type="time" value="' + escapeHtml(nowTime) + '">' +
+        '<div class="mini-title">原因</div>' +
+        '<textarea id="makeupReason" placeholder="請輸入原因">忘記打卡</textarea>' +
+        '<button class="btn-main" onclick="submitMakeupRequest()">送出補卡申請</button>' +
+        '<button class="btn-secondary" onclick="closeLiffNow()">關閉畫面</button>' +
+      '</div>';
+  };
+
+  window.showNewEmployeePageV57 = function () {
+    if (!lineUserId) {
+      setStatus('尚未取得 LINE userId，請重新開啟頁面');
+      return;
+    }
+
+    hideAllBoxes();
+    setButtons(false);
+    setStatus('正在確認主管權限...');
+
+    apiCall({
+      action: 'checkEmployee',
+      userId: lineUserId
+    }, function (res) {
+      setButtons(true);
+
+      if (!res || !res.ok) {
+        window.renderNewEmployeeDeniedV57(res || {});
+        return;
+      }
+
+      if (!window.canUseNewEmployeeV57(res)) {
+        window.renderNewEmployeeDeniedV57({ message: '此功能僅限主管 / 開發者使用。' });
+        return;
+      }
+
+      window.renderNewEmployeeFormV57();
+    });
+  };
+
+  window.renderNewEmployeeDeniedV57 = function (res) {
+    const statusBox = document.getElementById('status');
+
+    statusBox.innerHTML =
+      '<div class="status-blocked">' +
+        '<div class="status-blocked-icon">⛔</div>' +
+        '<div class="status-blocked-title">無主管權限</div>' +
+        '<div class="status-blocked-message">' +
+          escapeHtml(res.message || '你沒有使用新進員工登記的權限。') +
+        '</div>' +
+        '<button class="btn-outline" onclick="showMakeupPage()">返回忘記打卡</button>' +
+      '</div>';
+  };
+
+  window.renderNewEmployeeFormV57 = function () {
+    hideAllBoxes();
+
+    const statusBox = document.getElementById('status');
+
+    statusBox.innerHTML =
+      '<div class="success-card">' +
+        '<div class="success-title">新進員工登記</div>' +
+        '<div class="form-note">主管可先把新員工寫入 Google 試算表「員工資料」。新員工第一次使用 LINE 打卡時，仍要輸入員工ID 綁定自己的 LINE userId。</div>' +
+
+        '<div class="mini-title">員工名字</div>' +
+        '<input id="newEmployeeNameV57" type="text" placeholder="例如：陳小明">' +
+
+        '<div class="mini-title">員工ID</div>' +
+        '<input id="newEmployeeIdV57" type="text" inputmode="numeric" placeholder="例如：手機號碼 / 員工編號">' +
+
+        '<div class="mini-title">分店</div>' +
+        '<select id="newEmployeeStoreV57">' +
+          '<option value="瑞豐店">瑞豐店</option>' +
+          '<option value="六合店">六合店</option>' +
+          '<option value="新堀江店">新堀江店</option>' +
+        '</select>' +
+
+        '<div class="success-note">預設會寫入：職位＝正職、狀態＝啟用、LINE userId＝空白。\n等新員工第一次 LINE 登入綁定後，系統才會補上 LINE userId。</div>' +
+
+        '<button class="btn-main" onclick="submitNewEmployeeV57()">新增新進員工</button>' +
+        '<button class="btn-outline" onclick="showMakeupPage()">返回忘記打卡</button>' +
+        '<button class="btn-secondary" onclick="closeLiffNow()">關閉畫面</button>' +
+      '</div>';
+  };
+
+  window.submitNewEmployeeV57 = function () {
+    const nameInput = document.getElementById('newEmployeeNameV57');
+    const idInput = document.getElementById('newEmployeeIdV57');
+    const storeInput = document.getElementById('newEmployeeStoreV57');
+
+    const employeeName = nameInput ? String(nameInput.value || '').trim() : '';
+    const employeeId = idInput ? String(idInput.value || '').trim() : '';
+    const store = storeInput ? String(storeInput.value || '').trim() : '';
+
+    if (!employeeName) {
+      setStatus('請輸入員工名字。');
+      return;
+    }
+
+    if (!employeeId) {
+      setStatus('請輸入員工ID。');
+      return;
+    }
+
+    if (!store) {
+      setStatus('請選擇分店。');
+      return;
+    }
+
+    setButtons(false);
+    setStatus(
+      '正在新增新進員工...\n\n' +
+      '姓名：' + employeeName + '\n' +
+      '員工ID：' + employeeId + '\n' +
+      '分店：' + store
+    );
+
+    apiCall({
+      action: 'adminCreateEmployee',
+      adminUserId: lineUserId,
+      userId: lineUserId,
+      employeeName: employeeName,
+      employeeId: employeeId,
+      store: store,
+      position: '正職',
+      status: '啟用',
+      frontendVersion: 'V57_NEW_EMPLOYEE'
+    }, function (res) {
+      setButtons(true);
+
+      if (!res || !res.ok) {
+        window.renderNewEmployeeFailedV57(res || {});
+        return;
+      }
+
+      window.renderNewEmployeeSuccessV57(res);
+    });
+  };
+
+  window.renderNewEmployeeFailedV57 = function (res) {
+    const statusBox = document.getElementById('status');
+
+    statusBox.innerHTML =
+      '<div class="status-blocked">' +
+        '<div class="status-blocked-icon">❌</div>' +
+        '<div class="status-blocked-title">新增失敗</div>' +
+        '<div class="status-blocked-message">' + escapeHtml(res.message || '新進員工新增失敗。') + '</div>' +
+        '<button class="btn-outline" onclick="renderNewEmployeeFormV57()">重新輸入</button>' +
+        '<button class="btn-secondary" onclick="showMakeupPage()">返回忘記打卡</button>' +
+      '</div>';
+  };
+
+  window.renderNewEmployeeSuccessV57 = function (res) {
+    const statusBox = document.getElementById('status');
+
+    statusBox.innerHTML =
+      '<div class="success-card">' +
+        '<div class="success-icon">✓</div>' +
+        '<div class="success-title">新進員工已新增</div>' +
+        '<div class="success-list">' +
+          makeSuccessRowHtml('員工名字', res.name || '-') +
+          makeSuccessRowHtml('員工ID', res.employeeId || '-') +
+          makeSuccessRowHtml('分店', res.store || '-') +
+          makeSuccessRowHtml('職位', res.position || '正職') +
+          makeSuccessRowHtml('狀態', res.status || '啟用') +
+        '</div>' +
+        '<div class="success-note">接下來請新員工用自己的 LINE 開啟打卡系統，第一次輸入員工ID 綁定 LINE userId。綁定成功後就可以正常打卡。</div>' +
+        '<button class="btn-main" onclick="renderNewEmployeeFormV57()">再新增一位</button>' +
+        '<button class="btn-outline" onclick="showMakeupPage()">返回忘記打卡</button>' +
+        '<button class="btn-secondary" onclick="closeLiffNow()">關閉畫面</button>' +
+      '</div>';
+  };
+
+  setTimeout(function () {
+    try {
+      const footer = document.querySelector('.footer');
+      if (footer) {
+        footer.innerText = 'LIFF ID：2010226307-AZeYYFbb｜前端 V57 新進員工';
+      }
+    } catch (e) {}
+  }, 800);
+})();
+</script>
+
+
 </body>
 </html>
