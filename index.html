@@ -1097,13 +1097,13 @@ textarea {
           '<div class="mini-title">補卡日期</div>' +
           '<input id="makeupDate" type="date" value="' + escapeHtml(today.replace(/\//g, '-')) + '">' +
           '<div class="mini-title">分店</div>' +
-          '<select id="makeupStore">' +
+          '<select id="makeupStore" class="makeup-center-select-v591">' +
             '<option value="瑞豐店">瑞豐店</option>' +
             '<option value="六合店">六合店</option>' +
             '<option value="新堀江店">新堀江店</option>' +
           '</select>' +
           '<div class="mini-title">補卡類型</div>' +
-          '<select id="makeupType">' +
+          '<select id="makeupType" class="makeup-center-select-v591">' +
             '<option value="上班">上班</option>' +
             '<option value="休息開始">休息開始</option>' +
             '<option value="休息結束">休息結束</option>' +
@@ -3730,13 +3730,13 @@ setTimeout(function () {
         '<div class="mini-title">補卡日期</div>' +
         '<input id="makeupDate" type="date" value="' + escapeHtml(today.replace(/\//g, '-')) + '">' +
         '<div class="mini-title">分店</div>' +
-        '<select id="makeupStore">' +
+        '<select id="makeupStore" class="makeup-center-select-v591">' +
           '<option value="瑞豐店">瑞豐店</option>' +
           '<option value="六合店">六合店</option>' +
           '<option value="新堀江店">新堀江店</option>' +
         '</select>' +
         '<div class="mini-title">補卡類型</div>' +
-        '<select id="makeupType">' +
+        '<select id="makeupType" class="makeup-center-select-v591">' +
           '<option value="上班">上班</option>' +
           '<option value="休息開始">休息開始</option>' +
           '<option value="休息結束">休息結束</option>' +
@@ -3970,13 +3970,13 @@ setTimeout(function () {
         '<div class="mini-title">補卡日期</div>' +
         '<input id="makeupDate" type="date" value="' + escapeHtml(today.replace(/\//g, '-')) + '">' +
         '<div class="mini-title">分店</div>' +
-        '<select id="makeupStore">' +
+        '<select id="makeupStore" class="makeup-center-select-v591">' +
           '<option value="瑞豐店">瑞豐店</option>' +
           '<option value="六合店">六合店</option>' +
           '<option value="新堀江店">新堀江店</option>' +
         '</select>' +
         '<div class="mini-title">補卡類型</div>' +
-        '<select id="makeupType">' +
+        '<select id="makeupType" class="makeup-center-select-v591">' +
           '<option value="上班">上班</option>' +
           '<option value="休息開始">休息開始</option>' +
           '<option value="休息結束">休息結束</option>' +
@@ -4221,13 +4221,13 @@ setTimeout(function () {
         '<div class="mini-title">補卡日期 <span class="makeup-date-warn-v59">（凌晨下班要注意隔日）</span></div>' +
         '<input id="makeupDate" type="date" value="' + escapeHtml(today.replace(/\//g, '-')) + '">' +
         '<div class="mini-title">分店</div>' +
-        '<select id="makeupStore">' +
+        '<select id="makeupStore" class="makeup-center-select-v591">' +
           '<option value="瑞豐店">瑞豐店</option>' +
           '<option value="六合店">六合店</option>' +
           '<option value="新堀江店">新堀江店</option>' +
         '</select>' +
         '<div class="mini-title">補卡類型</div>' +
-        '<select id="makeupType">' +
+        '<select id="makeupType" class="makeup-center-select-v591">' +
           '<option value="上班">上班</option>' +
           '<option value="休息開始">休息開始</option>' +
           '<option value="休息結束">休息結束</option>' +
@@ -4443,6 +4443,188 @@ setTimeout(function () {
   font-size: 13px;
   line-height: 1.7;
   color: #5d6b60;
+}
+</style>
+
+
+<script>
+// =====================================================
+// V59.1：修正員工刪除補卡確認視窗 + 補卡分店/類型置中
+// =====================================================
+(function () {
+  window.pendingDeleteRowIndexesV591 = [];
+
+  window.confirmDeleteMyPendingMakeupV59 = function () {
+    const checked = Array.prototype.slice.call(
+      document.querySelectorAll('input[name="deletePendingMakeupV59"]:checked')
+    );
+
+    const rowIndexes = checked
+      .map(function (input) { return String(input.value || '').trim(); })
+      .filter(function (value) { return value; });
+
+    if (rowIndexes.length === 0) {
+      setStatus('請先勾選要刪除的補卡申請。');
+      return;
+    }
+
+    window.pendingDeleteRowIndexesV591 = rowIndexes;
+    showDeleteMakeupConfirmModalV591(rowIndexes.length);
+  };
+
+  function showDeleteMakeupConfirmModalV591(count) {
+    closeDeleteMakeupConfirmModalV591();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'deleteMakeupConfirmOverlayV591';
+    overlay.className = 'delete-confirm-overlay-v591';
+    overlay.innerHTML =
+      '<div class="delete-confirm-box-v591">' +
+        '<div class="delete-confirm-title-v591">確定刪除補卡？</div>' +
+        '<div class="delete-confirm-text-v591">' +
+          '你已勾選 ' + escapeHtml(String(count || 0)) + ' 筆待審核補卡。<br><br>' +
+          '刪除後會同步移除試算表中的待審核資料，且不能復原。' +
+        '</div>' +
+        '<div class="delete-confirm-actions-v591">' +
+          '<button type="button" class="delete-confirm-cancel-v591" onclick="closeDeleteMakeupConfirmModalV591()">取消</button>' +
+          '<button type="button" class="delete-confirm-ok-v591" onclick="executeDeleteMyPendingMakeupV591()">確定</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+  }
+
+  window.closeDeleteMakeupConfirmModalV591 = function () {
+    closeDeleteMakeupConfirmModalV591();
+  };
+
+  function closeDeleteMakeupConfirmModalV591() {
+    const overlay = document.getElementById('deleteMakeupConfirmOverlayV591');
+    if (overlay && overlay.parentNode) {
+      overlay.parentNode.removeChild(overlay);
+    }
+  }
+
+  window.executeDeleteMyPendingMakeupV591 = function () {
+    const rowIndexes = Array.isArray(window.pendingDeleteRowIndexesV591)
+      ? window.pendingDeleteRowIndexesV591
+      : [];
+
+    closeDeleteMakeupConfirmModalV591();
+
+    if (rowIndexes.length === 0) {
+      setStatus('請先勾選要刪除的補卡申請。');
+      return;
+    }
+
+    setButtons(false);
+    setStatus('正在刪除錯誤補卡申請...');
+
+    apiCall({
+      action: 'deleteMyPendingMakeupRequests',
+      userId: lineUserId,
+      rowIndexes: rowIndexes.join(',')
+    }, function (res) {
+      setButtons(true);
+      window.pendingDeleteRowIndexesV591 = [];
+
+      if (!res || !res.ok) {
+        setStatus((res && res.message) || '刪除補卡申請失敗');
+        return;
+      }
+
+      window.renderMyPendingMakeupDeleteResultV59(res);
+    });
+  };
+
+  setTimeout(function () {
+    try {
+      const store = document.getElementById('makeupStore');
+      const type = document.getElementById('makeupType');
+      if (store) store.classList.add('makeup-center-select-v591');
+      if (type) type.classList.add('makeup-center-select-v591');
+    } catch (e) {}
+  }, 200);
+})();
+</script>
+
+<style>
+#makeupStore,
+#makeupType,
+.makeup-center-select-v591 {
+  text-align: center !important;
+  text-align-last: center !important;
+  -moz-text-align-last: center !important;
+  font-weight: 800 !important;
+  color: #1683e8 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+#makeupStore option,
+#makeupType option,
+.makeup-center-select-v591 option {
+  text-align: center !important;
+}
+
+.delete-confirm-overlay-v591 {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.delete-confirm-box-v591 {
+  width: 100%;
+  max-width: 360px;
+  background: #fff;
+  border-radius: 22px;
+  padding: 24px 22px 16px;
+  text-align: center;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+}
+
+.delete-confirm-title-v591 {
+  font-size: 22px;
+  font-weight: 900;
+  color: #243529;
+  margin-bottom: 12px;
+}
+
+.delete-confirm-text-v591 {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #6a6f6b;
+  margin-bottom: 22px;
+}
+
+.delete-confirm-actions-v591 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  margin: 0 -22px -16px;
+}
+
+.delete-confirm-actions-v591 button {
+  margin: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 18px 8px;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.delete-confirm-cancel-v591 {
+  color: #243529 !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.delete-confirm-ok-v591 {
+  color: #1db446 !important;
 }
 </style>
 
