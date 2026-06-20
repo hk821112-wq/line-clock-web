@@ -4170,7 +4170,193 @@ setTimeout(function () {
 <script>
 // =====================================================
 // 前端 V59：員工自行刪除錯誤待審核補卡 + 補卡日期紅字提醒
-// 放在整份 HTML 最底部、</body> 前面，覆蓋前面 renderMakeupForm。
+// 放在整份 HTML 最底部、
+
+<script>
+// =====================================================
+// 前端 V60：本月紀錄 / 歷史紀錄底部顯示員工成就圖片
+// GAS 需支援 action=getEmployeeAchievements
+// =====================================================
+(function () {
+  var originalRenderRecordsPageV60 = window.renderRecordsPage;
+
+  window.renderRecordsPage = function (mode, records) {
+    mode = mode === 'history' ? 'history' : 'month';
+
+    if (typeof originalRenderRecordsPageV60 === 'function') {
+      originalRenderRecordsPageV60.call(window, mode, records || []);
+    } else {
+      const statusBox = document.getElementById('status');
+      const title = mode === 'history' ? '歷史打卡紀錄' : '本月打卡紀錄';
+      const text = typeof formatGroupedRecordsText === 'function'
+        ? formatGroupedRecordsText(title, records || [])
+        : title;
+
+      if (statusBox) {
+        statusBox.innerHTML =
+          '<div class="records-tabs">' +
+            '<button class="' + (mode === 'month' ? 'record-active' : 'record-inactive') + '" onclick="showRecordsHub(\'month\')">本月紀錄</button>' +
+            '<button class="' + (mode === 'history' ? 'record-active' : 'record-inactive') + '" onclick="showRecordsHub(\'history\')">歷史紀錄</button>' +
+          '</div>' +
+          '<div class="status-blocked-message">' + escapeHtml(text) + '</div>';
+      }
+    }
+
+    window.prepareAchievementAreaV60(mode);
+    window.loadEmployeeAchievementsV60(mode);
+  };
+
+  window.prepareAchievementAreaV60 = function (mode) {
+    const statusBox = document.getElementById('status');
+    if (!statusBox) return;
+
+    const oldBox = document.getElementById('employeeAchievementBoxV60');
+    if (oldBox && oldBox.parentNode) {
+      oldBox.parentNode.removeChild(oldBox);
+    }
+
+    statusBox.insertAdjacentHTML(
+      'beforeend',
+      '<div id="employeeAchievementBoxV60" class="achievement-box-v60 achievement-loading-v60">' +
+        '<div class="achievement-heading-v60">🏆 專屬成就</div>' +
+        '<div class="achievement-loading-text-v60">正在讀取成就...</div>' +
+      '</div>'
+    );
+  };
+
+  window.loadEmployeeAchievementsV60 = function (mode) {
+    mode = mode === 'history' ? 'history' : 'month';
+
+    if (!lineUserId) {
+      window.renderEmployeeAchievementsV60([]);
+      return;
+    }
+
+    apiCall({
+      action: 'getEmployeeAchievements',
+      userId: lineUserId,
+      mode: mode,
+      frontendVersion: 'V60_EMPLOYEE_ACHIEVEMENTS'
+    }, function (res) {
+      if (!res || !res.ok) {
+        window.renderEmployeeAchievementsV60([]);
+        return;
+      }
+
+      window.renderEmployeeAchievementsV60(res.achievements || []);
+    });
+  };
+
+  window.renderEmployeeAchievementsV60 = function (achievements) {
+    const box = document.getElementById('employeeAchievementBoxV60');
+    if (!box) return;
+
+    achievements = Array.isArray(achievements) ? achievements : [];
+
+    if (achievements.length === 0) {
+      box.parentNode.removeChild(box);
+      return;
+    }
+
+    let html =
+      '<div class="achievement-heading-v60">🏆 專屬成就</div>' +
+      '<div class="achievement-list-v60">';
+
+    achievements.forEach(function (item) {
+      const title = String(item.title || '專屬成就').trim();
+      const imageUrl = String(item.imageUrl || '').trim();
+      const note = String(item.note || '').trim();
+
+      if (!imageUrl) return;
+
+      html +=
+        '<div class="achievement-card-v60">' +
+          '<img class="achievement-img-v60" src="' + escapeHtml(imageUrl) + '" alt="' + escapeHtml(title) + '" loading="lazy" onerror="this.style.display=\'none\'">' +
+          '<div class="achievement-name-v60">' + escapeHtml(title) + '</div>' +
+          (note ? '<div class="achievement-note-v60">' + escapeHtml(note) + '</div>' : '') +
+        '</div>';
+    });
+
+    html += '</div>';
+
+    box.className = 'achievement-box-v60';
+    box.innerHTML = html;
+  };
+
+  setTimeout(function () {
+    try {
+      const footer = document.querySelector('.footer');
+      if (footer) {
+        footer.innerText = 'LIFF ID：2010226307-AZeYYFbb｜前端 V60 員工成就圖';
+      }
+    } catch (e) {}
+  }, 1000);
+})();
+</script>
+
+<style>
+.achievement-box-v60 {
+  margin-top: 22px;
+  padding: 16px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #fffef9 0%, #f5f8f1 100%);
+  border: 1px solid rgba(37, 75, 47, 0.16);
+  box-shadow: 0 10px 24px rgba(37, 75, 47, 0.08);
+  text-align: center;
+}
+
+.achievement-heading-v60 {
+  font-size: 20px;
+  font-weight: 900;
+  color: #254b2f;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.achievement-loading-text-v60 {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #78857b;
+}
+
+.achievement-list-v60 {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.achievement-card-v60 {
+  overflow: hidden;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid rgba(37, 75, 47, 0.12);
+  box-shadow: 0 8px 18px rgba(37, 75, 47, 0.07);
+}
+
+.achievement-img-v60 {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 18px 18px 0 0;
+}
+
+.achievement-name-v60 {
+  padding: 12px 12px 4px;
+  font-size: 17px;
+  font-weight: 900;
+  color: #243529;
+  line-height: 1.5;
+}
+
+.achievement-note-v60 {
+  padding: 0 12px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #6f7d72;
+}
+</style>
+
+</body> 前面，覆蓋前面 renderMakeupForm。
 // =====================================================
 (function () {
   window.canUseMakeupReviewV59 = function (employee) {
