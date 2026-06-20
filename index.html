@@ -4170,7 +4170,330 @@ setTimeout(function () {
 <script>
 // =====================================================
 // 前端 V59：員工自行刪除錯誤待審核補卡 + 補卡日期紅字提醒
-// 放在整份 HTML 最底部、</body> 前面，覆蓋前面 renderMakeupForm。
+// 放在整份 HTML 最底部、
+<script>
+// =====================================================
+// 前端 V60：補卡日期 / 分店 / 類型改成滾動式選擇 + 自訂刪除確認窗
+// 1. 補卡日期改成 年/月/日 三段式 select，手機會以滾動式選擇器呈現
+// 2. 分店、補卡類型 select 置中，維持手機原生滾動式
+// 3. 刪除確認不再使用 window.confirm，避免跳出 hk821112-wq.github.io 網址
+// =====================================================
+(function () {
+  window.pad2V60 = function (num) {
+    return String(num).padStart(2, '0');
+  };
+
+  window.getTodayDatePartsV60 = function () {
+    const d = new Date();
+    return {
+      y: d.getFullYear(),
+      m: d.getMonth() + 1,
+      d: d.getDate()
+    };
+  };
+
+  window.daysInMonthV60 = function (year, month) {
+    return new Date(Number(year), Number(month), 0).getDate();
+  };
+
+  window.makeOptionsV60 = function (start, end, selected, suffix) {
+    let html = '';
+    for (let i = start; i <= end; i++) {
+      const value = String(i);
+      html += '<option value="' + escapeHtml(value) + '"' + (Number(selected) === i ? ' selected' : '') + '>' + escapeHtml(value + (suffix || '')) + '</option>';
+    }
+    return html;
+  };
+
+  window.renderMakeupDatePickerV60 = function () {
+    const today = window.getTodayDatePartsV60();
+
+    return (
+      '<input id="makeupDate" type="hidden" value="' + escapeHtml(today.y + '/' + window.pad2V60(today.m) + '/' + window.pad2V60(today.d)) + '">' +
+      '<div class="makeup-date-picker-v60">' +
+        '<select id="makeupYearV60" class="makeup-picker-v60 makeup-date-select-v60" onchange="updateMakeupDateV60()">' +
+          window.makeOptionsV60(today.y - 1, today.y, today.y, '年') +
+        '</select>' +
+        '<select id="makeupMonthV60" class="makeup-picker-v60 makeup-date-select-v60" onchange="updateMakeupDateV60()">' +
+          window.makeOptionsV60(1, 12, today.m, '月') +
+        '</select>' +
+        '<select id="makeupDayV60" class="makeup-picker-v60 makeup-date-select-v60" onchange="updateMakeupDateV60()">' +
+          window.makeOptionsV60(1, window.daysInMonthV60(today.y, today.m), today.d, '日') +
+        '</select>' +
+      '</div>'
+    );
+  };
+
+  window.updateMakeupDateV60 = function () {
+    const yInput = document.getElementById('makeupYearV60');
+    const mInput = document.getElementById('makeupMonthV60');
+    const dInput = document.getElementById('makeupDayV60');
+    const hidden = document.getElementById('makeupDate');
+
+    if (!yInput || !mInput || !dInput || !hidden) return;
+
+    const y = Number(yInput.value || 0);
+    const m = Number(mInput.value || 0);
+    let d = Number(dInput.value || 0);
+    const maxDay = window.daysInMonthV60(y, m);
+
+    if (d > maxDay) d = maxDay;
+
+    const oldDay = Number(dInput.value || 0);
+    if (oldDay !== d || dInput.options.length !== maxDay) {
+      dInput.innerHTML = window.makeOptionsV60(1, maxDay, d, '日');
+    }
+
+    hidden.value = y + '/' + window.pad2V60(m) + '/' + window.pad2V60(d);
+  };
+
+  window.renderMakeupForm = function (employee) {
+    const statusBox = document.getElementById('status');
+    const nowTime = getCurrentTimeText();
+    const canReview = typeof window.canUseMakeupReviewV59 === 'function'
+      ? window.canUseMakeupReviewV59(employee)
+      : (typeof window.canUseNewEmployeeV57 === 'function' ? window.canUseNewEmployeeV57(employee) : false);
+
+    const reviewButtonHtml = canReview && typeof window.showPendingReviewPageV55 === 'function'
+      ? '<button class="btn-outline" onclick="showPendingReviewPageV55()">補卡待審核</button>'
+      : '';
+
+    const newEmployeeButtonHtml = canReview && typeof window.showNewEmployeePageV57 === 'function'
+      ? '<button class="btn-outline" onclick="showNewEmployeePageV57()">新進員工</button>'
+      : '';
+
+    statusBox.innerHTML =
+      '<div class="success-card">' +
+        '<div class="success-title">忘記打卡 / 補卡申請</div>' +
+        (canReview ? '<div class="success-note">你目前是主管 / 開發者權限，可查看待審核補卡，也可以預先登記新進員工。</div>' : '') +
+        reviewButtonHtml +
+        newEmployeeButtonHtml +
+        '<button class="btn-danger" onclick="showMyPendingMakeupDeletePageV59()">錯誤補卡刪除</button>' +
+        '<div class="form-note">送出後會進入主管審核。審核通過後才會正式寫入打卡紀錄。</div>' +
+
+        '<div class="mini-title">補卡日期 <span class="makeup-date-warn-v59">（凌晨下班要注意隔日）</span></div>' +
+        window.renderMakeupDatePickerV60() +
+
+        '<div class="mini-title">分店</div>' +
+        '<select id="makeupStore" class="makeup-picker-v60 makeup-full-picker-v60">' +
+          '<option value="瑞豐店">瑞豐店</option>' +
+          '<option value="六合店">六合店</option>' +
+          '<option value="新堀江店">新堀江店</option>' +
+        '</select>' +
+
+        '<div class="mini-title">補卡類型</div>' +
+        '<select id="makeupType" class="makeup-picker-v60 makeup-full-picker-v60">' +
+          '<option value="上班">上班</option>' +
+          '<option value="休息開始">休息開始</option>' +
+          '<option value="休息結束">休息結束</option>' +
+          '<option value="下班">下班</option>' +
+        '</select>' +
+
+        '<div class="mini-title">補卡時間</div>' +
+        '<input id="makeupTime" class="makeup-picker-v60" type="time" value="' + escapeHtml(nowTime) + '">' +
+        '<div class="mini-title">原因</div>' +
+        '<textarea id="makeupReason" placeholder="請輸入原因">忘記打卡</textarea>' +
+        '<button class="btn-main" onclick="submitMakeupRequest()">送出補卡申請</button>' +
+        '<button class="btn-secondary" onclick="closeLiffNow()">關閉畫面</button>' +
+      '</div>';
+
+    setTimeout(function () {
+      window.updateMakeupDateV60();
+    }, 0);
+  };
+
+  window.pendingDeleteRowIndexesV60 = [];
+
+  window.confirmDeleteMyPendingMakeupV59 = function () {
+    const checked = Array.prototype.slice.call(
+      document.querySelectorAll('input[name="deletePendingMakeupV59"]:checked')
+    );
+
+    const rowIndexes = checked
+      .map(function (input) { return String(input.value || '').trim(); })
+      .filter(function (value) { return value; });
+
+    if (rowIndexes.length === 0) {
+      setStatus('請先勾選要刪除的補卡申請。');
+      return;
+    }
+
+    window.pendingDeleteRowIndexesV60 = rowIndexes;
+    window.showDeleteMakeupConfirmModalV60(rowIndexes.length);
+  };
+
+  window.showDeleteMakeupConfirmModalV60 = function (count) {
+    window.closeDeleteMakeupConfirmModalV60();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'deleteMakeupConfirmOverlayV60';
+    overlay.className = 'custom-confirm-overlay-v60';
+    overlay.innerHTML =
+      '<div class="custom-confirm-box-v60">' +
+        '<div class="custom-confirm-title-v60">確定刪除補卡？</div>' +
+        '<div class="custom-confirm-text-v60">' +
+          '你已勾選 ' + escapeHtml(String(count || 0)) + ' 筆待審核補卡。<br><br>' +
+          '刪除後會同步移除試算表中的待審核資料，且不能復原。' +
+        '</div>' +
+        '<div class="custom-confirm-actions-v60">' +
+          '<button type="button" class="custom-confirm-cancel-v60" onclick="closeDeleteMakeupConfirmModalV60()">取消</button>' +
+          '<button type="button" class="custom-confirm-ok-v60" onclick="executeDeleteMyPendingMakeupV60()">確定</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+  };
+
+  window.closeDeleteMakeupConfirmModalV60 = function () {
+    const overlay = document.getElementById('deleteMakeupConfirmOverlayV60');
+    if (overlay && overlay.parentNode) {
+      overlay.parentNode.removeChild(overlay);
+    }
+  };
+
+  window.executeDeleteMyPendingMakeupV60 = function () {
+    const rowIndexes = Array.isArray(window.pendingDeleteRowIndexesV60)
+      ? window.pendingDeleteRowIndexesV60
+      : [];
+
+    window.closeDeleteMakeupConfirmModalV60();
+
+    if (rowIndexes.length === 0) {
+      setStatus('請先勾選要刪除的補卡申請。');
+      return;
+    }
+
+    setButtons(false);
+    setStatus('正在刪除錯誤補卡申請...');
+
+    apiCall({
+      action: 'deleteMyPendingMakeupRequests',
+      userId: lineUserId,
+      rowIndexes: rowIndexes.join(',')
+    }, function (res) {
+      setButtons(true);
+      window.pendingDeleteRowIndexesV60 = [];
+
+      if (!res || !res.ok) {
+        setStatus((res && res.message) || '刪除補卡申請失敗');
+        return;
+      }
+
+      window.renderMyPendingMakeupDeleteResultV59(res);
+    });
+  };
+
+  setTimeout(function () {
+    try {
+      const footer = document.querySelector('.footer');
+      if (footer) {
+        footer.innerText = 'LIFF ID：2010226307-AZeYYFbb｜前端 V60 滾動式補卡選擇';
+      }
+    } catch (e) {}
+  }, 1000);
+})();
+</script>
+
+<style>
+.makeup-date-picker-v60 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.makeup-picker-v60 {
+  text-align: center;
+  text-align-last: center;
+  font-weight: 800;
+  color: #1683e8;
+  background: #fff;
+  -webkit-appearance: auto;
+  appearance: auto;
+}
+
+.makeup-date-select-v60,
+.makeup-full-picker-v60 {
+  min-height: 66px;
+  font-size: 20px;
+  border-radius: 18px;
+}
+
+.makeup-full-picker-v60 {
+  display: block;
+  width: 100%;
+}
+
+.makeup-picker-v60 option {
+  text-align: center;
+}
+
+.custom-confirm-overlay-v60 {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99999;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.custom-confirm-box-v60 {
+  width: 100%;
+  max-width: 360px;
+  background: #fff;
+  border-radius: 22px;
+  padding: 24px 22px 16px;
+  text-align: center;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+}
+
+.custom-confirm-title-v60 {
+  font-size: 22px;
+  font-weight: 900;
+  color: #243529;
+  margin-bottom: 12px;
+}
+
+.custom-confirm-text-v60 {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #6a6f6b;
+  margin-bottom: 22px;
+}
+
+.custom-confirm-actions-v60 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  margin: 0 -22px -16px;
+}
+
+.custom-confirm-actions-v60 button {
+  margin: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 18px 8px;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.custom-confirm-cancel-v60 {
+  color: #243529 !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.custom-confirm-ok-v60 {
+  color: #1db446 !important;
+}
+</style>
+
+</body> 前面，覆蓋前面 renderMakeupForm。
 // =====================================================
 (function () {
   window.canUseMakeupReviewV59 = function (employee) {
