@@ -4331,7 +4331,7 @@ setTimeout(function () {
 
     const ok = window.confirm(
       '確定要刪除已勾選的待審核補卡嗎？\n\n' +
-      '刪除後會同步移除試算表中的待審核資料，且不能復原。'
+      '刪除後,請再重新申請補卡。'
     );
 
     if (!ok) return;
@@ -4483,7 +4483,7 @@ setTimeout(function () {
         '<div class="delete-confirm-title-v591">確定刪除補卡？</div>' +
         '<div class="delete-confirm-text-v591">' +
           '你已勾選 ' + escapeHtml(String(count || 0)) + ' 筆待審核補卡。<br><br>' +
-          '刪除後會同步移除試算表中的待審核資料，且不能復原。' +
+          '刪除後,請再重新申請補卡。' +
         '</div>' +
         '<div class="delete-confirm-actions-v591">' +
           '<button type="button" class="delete-confirm-cancel-v591" onclick="closeDeleteMakeupConfirmModalV591()">取消</button>' +
