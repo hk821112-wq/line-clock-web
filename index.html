@@ -5442,7 +5442,7 @@ setTimeout(function () {
     try {
       const footer = document.querySelector('.footer');
       if (footer && footer.innerText.indexOf('前端 V62') === -1) {
-        footer.innerText = footer.innerText + '｜前端 V62 未打卡提醒01';
+        footer.innerText = footer.innerText + '｜前端 V62 未打卡提醒02';
       }
     } catch (e) {}
   }, 1300);
@@ -7206,6 +7206,511 @@ textarea:focus{
 
   .missing-clock-warning-v62{
     font-size:17px !important;
+  }
+}
+</style>
+
+
+
+<!-- =====================================================
+V66 文字排版版｜取消框中框
+重點：用文字、間距、字重建立層級；輸入欄位改底線式；按鈕改文字區塊
+===================================================== -->
+<style id="clock-text-layout-v66">
+:root{
+  --v66-bg:#070b12;
+  --v66-text:#f6f9ff;
+  --v66-sub:#9faabb;
+  --v66-soft:#778396;
+  --v66-line:rgba(255,255,255,.12);
+  --v66-line-soft:rgba(255,255,255,.075);
+  --v66-green:#63e6ae;
+  --v66-red:#ff6363;
+  --v66-blue:#8bc8ff;
+  --v66-yellow:#ffd66b;
+}
+
+body{
+  background:
+    radial-gradient(circle at 50% -8%, rgba(139,194,255,.20), transparent 34%),
+    radial-gradient(circle at 12% 82%, rgba(99,230,174,.10), transparent 28%),
+    linear-gradient(180deg,#070b12 0%,#0a1018 44%,#06080d 100%) !important;
+  color:var(--v66-text) !important;
+}
+
+body::before,
+body::after{
+  display:none !important;
+}
+
+.wrap{
+  width:min(520px,100%) !important;
+  min-height:100vh !important;
+  padding:24px 26px 28px !important;
+  justify-content:flex-start !important;
+}
+
+.header{
+  padding:8px 0 24px !important;
+}
+
+.brand{
+  font-size:40px !important;
+  line-height:.98 !important;
+  letter-spacing:-1.8px !important;
+  font-weight:1000 !important;
+}
+
+.subtitle{
+  margin-top:10px !important;
+  color:var(--v66-sub) !important;
+  font-size:15px !important;
+  line-height:1.6 !important;
+  font-weight:850 !important;
+}
+
+/* 全部取消卡片感 */
+.card,
+.status{
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  border-radius:0 !important;
+  padding:0 !important;
+  margin:0 !important;
+}
+
+.card::before,
+.card::after{
+  display:none !important;
+}
+
+/* 狀態文字直接排版，不再是一個框 */
+.status{
+  color:var(--v66-text) !important;
+  font-size:16px !important;
+  line-height:1.9 !important;
+  font-weight:760 !important;
+  letter-spacing:.1px !important;
+  white-space:pre-line !important;
+}
+
+/* 補卡頁大標題 */
+.success-card{
+  padding:0 !important;
+  text-align:left !important;
+}
+
+.success-title,
+.status-blocked-title{
+  margin:0 0 18px !important;
+  color:var(--v66-text) !important;
+  font-size:34px !important;
+  line-height:1.05 !important;
+  font-weight:1000 !important;
+  letter-spacing:-1.6px !important;
+  text-align:left !important;
+}
+
+/* 成功時間大字排版 */
+.success-time{
+  margin:0 0 22px !important;
+  color:var(--v66-text) !important;
+  font-size:54px !important;
+  line-height:.95 !important;
+  font-weight:1000 !important;
+  letter-spacing:-2px !important;
+  text-align:left !important;
+}
+
+/* 成功圖示變成小型狀態，不搶版面 */
+.success-icon{
+  width:auto !important;
+  height:auto !important;
+  margin:0 0 12px !important;
+  display:inline-block !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  color:var(--v66-green) !important;
+  font-size:32px !important;
+  line-height:1 !important;
+}
+
+/* 說明文字：純文字，不要提示框 */
+.success-note,
+.form-note{
+  margin:0 0 24px !important;
+  padding:0 !important;
+  color:var(--v66-sub) !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  font-size:16px !important;
+  line-height:1.85 !important;
+  font-weight:800 !important;
+  text-align:left !important;
+}
+
+/* 功能按鈕群：改成文字選單，不像一顆一顆灰框 */
+button{
+  background:transparent !important;
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  color:var(--v66-text) !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:18px 0 !important;
+  font-size:18px !important;
+  line-height:1.15 !important;
+  font-weight:1000 !important;
+  letter-spacing:-.4px !important;
+  text-align:left !important;
+  border-bottom:1px solid var(--v66-line-soft) !important;
+}
+
+button:active{
+  transform:translateX(2px) !important;
+  opacity:.72 !important;
+}
+
+button:disabled{
+  opacity:.42 !important;
+}
+
+/* 首頁四大按鈕：大字排版，無框 */
+#homeBox:not(.hidden){
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:0 28px !important;
+  margin-top:8px !important;
+}
+
+#homeBox .section-title{
+  grid-column:1 / -1 !important;
+  margin:0 0 8px !important;
+  padding:0 0 12px !important;
+  color:var(--v66-sub) !important;
+  border-bottom:1px solid var(--v66-line-soft) !important;
+  font-size:14px !important;
+  font-weight:900 !important;
+  letter-spacing:.5px !important;
+}
+
+#homeBox .btn-main{
+  min-height:118px !important;
+  padding:22px 0 18px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:flex-end !important;
+  align-items:flex-start !important;
+  text-align:left !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  border-bottom:1px solid var(--v66-line-soft) !important;
+  font-size:27px !important;
+  line-height:1 !important;
+  letter-spacing:-1.4px !important;
+}
+
+#homeBox .btn-main::before{
+  position:static !important;
+  display:block !important;
+  margin:0 0 14px !important;
+  padding:0 !important;
+  background:transparent !important;
+  border:0 !important;
+  color:var(--v66-soft) !important;
+  font-size:11px !important;
+  line-height:1 !important;
+  font-weight:1000 !important;
+  letter-spacing:1.8px !important;
+}
+
+#homeBox .btn-main::after{
+  display:none !important;
+}
+
+#homeBox .btn-main:nth-of-type(1)::before{content:"WORK IN" !important;color:var(--v66-green) !important;}
+#homeBox .btn-main:nth-of-type(2)::before{content:"WORK OUT" !important;color:var(--v66-red) !important;}
+#homeBox .btn-main:nth-of-type(3)::before{content:"BREAK" !important;color:var(--v66-yellow) !important;}
+#homeBox .btn-main:nth-of-type(4)::before{content:"RETURN" !important;color:var(--v66-blue) !important;}
+
+#homeBox .btn-outline{
+  grid-column:1 / -1 !important;
+  min-height:0 !important;
+  padding:18px 0 !important;
+  color:var(--v66-sub) !important;
+  font-size:17px !important;
+}
+
+/* 分頁按鈕同樣改純文字 */
+.records-tabs{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:18px !important;
+  margin:0 0 24px !important;
+}
+
+.records-tabs button{
+  padding:0 0 12px !important;
+  border-bottom:1px solid var(--v66-line-soft) !important;
+  text-align:left !important;
+  font-size:17px !important;
+}
+
+.record-active{
+  color:var(--v66-text) !important;
+  border-bottom-color:rgba(255,255,255,.5) !important;
+}
+
+.record-inactive{
+  color:var(--v66-soft) !important;
+}
+
+/* 表單欄位：改底線式，避免灰色框框 */
+.section-title,
+.mini-title{
+  margin:22px 0 6px !important;
+  color:var(--v66-soft) !important;
+  font-size:13px !important;
+  line-height:1.2 !important;
+  font-weight:1000 !important;
+  letter-spacing:.6px !important;
+}
+
+.section-title::before,
+.mini-title::before{
+  display:none !important;
+}
+
+input,
+select,
+textarea{
+  width:100% !important;
+  margin:0 !important;
+  padding:8px 0 14px !important;
+  color:var(--v66-text) !important;
+  background:transparent !important;
+  border:0 !important;
+  border-bottom:1px solid var(--v66-line) !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  font-size:22px !important;
+  line-height:1.25 !important;
+  font-weight:1000 !important;
+  letter-spacing:-.8px !important;
+  text-align:left !important;
+  text-align-last:left !important;
+}
+
+textarea{
+  min-height:96px !important;
+  resize:vertical !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+  border-bottom-color:rgba(255,255,255,.55) !important;
+  box-shadow:none !important;
+  outline:none !important;
+}
+
+input::placeholder,
+textarea::placeholder{
+  color:rgba(255,255,255,.28) !important;
+}
+
+/* 主要送出按鈕：只用一顆強調，不再多框 */
+.btn-main,
+.record-active{
+  background:transparent !important;
+}
+
+.success-card > .btn-main,
+.success-card > button.btn-main,
+button.btn-main[onclick*="submitMakeupRequest"]{
+  margin-top:28px !important;
+  padding:20px 0 !important;
+  color:var(--v66-text) !important;
+  border-bottom:1px solid rgba(255,255,255,.42) !important;
+  font-size:24px !important;
+  letter-spacing:-1px !important;
+}
+
+.btn-secondary,
+.btn-bind,
+.btn-outline{
+  color:var(--v66-sub) !important;
+}
+
+.btn-danger,
+.delete-confirm-ok-v591{
+  color:var(--v66-red) !important;
+}
+
+/* 成功資料列表：純文字列 */
+.success-list{
+  margin:18px 0 22px !important;
+  padding:0 !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+}
+
+.success-row{
+  padding:12px 0 !important;
+  border-bottom:1px solid var(--v66-line-soft) !important;
+}
+
+.success-label{
+  min-width:86px !important;
+  color:var(--v66-soft) !important;
+  font-size:14px !important;
+  font-weight:900 !important;
+}
+
+.success-value{
+  color:var(--v66-text) !important;
+  font-size:17px !important;
+  font-weight:1000 !important;
+  text-align:right !important;
+}
+
+/* 載入 / 錯誤狀態 */
+.sending-status,
+.status-blocked .status-blocked-message,
+.pending-delete-item-v59{
+  margin:0 !important;
+  padding:0 !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+}
+
+.sending-title{
+  color:var(--v66-green) !important;
+  font-size:24px !important;
+  font-weight:1000 !important;
+  letter-spacing:-.8px !important;
+}
+
+.sending-action{
+  margin-top:8px !important;
+  color:var(--v66-text) !important;
+  font-size:31px !important;
+  font-weight:1000 !important;
+  letter-spacing:-1.2px !important;
+}
+
+.status-blocked-icon{
+  margin:0 0 12px !important;
+  font-size:42px !important;
+}
+
+.status-blocked-title{
+  color:var(--v66-red) !important;
+}
+
+/* 未打卡提醒：改成大紅字文字，不做框 */
+.missing-clock-warning-v62{
+  margin:0 0 24px !important;
+  padding:0 0 18px !important;
+  color:var(--v66-red) !important;
+  background:transparent !important;
+  border:0 !important;
+  border-bottom:1px solid rgba(255,99,99,.32) !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  font-size:22px !important;
+  line-height:1.38 !important;
+  font-weight:1000 !important;
+  letter-spacing:-.8px !important;
+  text-align:left !important;
+  animation:none !important;
+}
+
+/* 底部提示變淡 */
+.tips{
+  margin:20px 0 0 !important;
+  color:rgba(255,255,255,.36) !important;
+  font-size:12px !important;
+  line-height:1.7 !important;
+  text-align:left !important;
+}
+
+.tips::before{
+  display:none !important;
+}
+
+.footer{
+  margin:22px 0 0 !important;
+  color:rgba(255,255,255,.22) !important;
+  text-align:left !important;
+  font-size:10px !important;
+}
+
+/* 刪除確認彈窗保留一層，不能完全無容器，否則不好操作 */
+.delete-confirm-overlay-v591{
+  background:rgba(5,8,13,.66) !important;
+  backdrop-filter:blur(12px) !important;
+  -webkit-backdrop-filter:blur(12px) !important;
+}
+
+.delete-confirm-box-v591{
+  background:#101720 !important;
+  border:0 !important;
+  border-radius:28px !important;
+  box-shadow:0 24px 70px rgba(0,0,0,.42) !important;
+}
+
+@media(max-width:430px){
+  .wrap{
+    padding:24px 22px 24px !important;
+  }
+
+  .brand{
+    font-size:36px !important;
+  }
+
+  .success-title,
+  .status-blocked-title{
+    font-size:31px !important;
+  }
+
+  .success-time{
+    font-size:48px !important;
+  }
+
+  #homeBox:not(.hidden){
+    gap:0 22px !important;
+  }
+
+  #homeBox .btn-main{
+    min-height:108px !important;
+    font-size:25px !important;
+  }
+
+  input,
+  select,
+  textarea{
+    font-size:21px !important;
+  }
+
+  .missing-clock-warning-v62{
+    font-size:21px !important;
   }
 }
 </style>
