@@ -5282,5 +5282,172 @@ setTimeout(function () {
 })();
 </script>
 
+
+<!-- =====================================================
+前端 V62：打卡畫面顯示「有未打卡紀錄」紅字提醒
+顯示位置：上班 / 休息開始 / 休息結束 / 下班打卡畫面最上方
+===================================================== -->
+<style>
+.missing-clock-warning-v62 {
+  color: #d93025;
+  background: #fff1f0;
+  border: 1px solid rgba(217, 48, 37, 0.35);
+  border-radius: 14px;
+  padding: 11px 12px;
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.6;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+</style>
+
+<script>
+(function () {
+  const MISSING_CLOCK_FRONT_PATCH_V62 = 'V62_MISSING_CLOCK_NOTICE_ON_CLOCK_PAGES';
+  const MISSING_CLOCK_WARNING_TEXT_V62 = '有未打卡紀錄 請查看打卡紀錄 並補卡!';
+
+  window.missingClockNoticeV62 = null;
+
+  function hasMissingClockNoticeV62() {
+    return !!(window.missingClockNoticeV62 && window.missingClockNoticeV62.hasMissing);
+  }
+
+  function getMissingClockWarningHtmlV62() {
+    return '<div class="missing-clock-warning-v62">' + escapeHtml(MISSING_CLOCK_WARNING_TEXT_V62) + '</div>';
+  }
+
+  function prependMissingClockWarningV62() {
+    const statusBox = document.getElementById('status');
+
+    if (!statusBox || !hasMissingClockNoticeV62()) {
+      return;
+    }
+
+    if (statusBox.querySelector && statusBox.querySelector('.missing-clock-warning-v62')) {
+      return;
+    }
+
+    statusBox.innerHTML = getMissingClockWarningHtmlV62() + statusBox.innerHTML;
+  }
+
+  function safeCheckMissingClockNoticeV62() {
+    if (!lineUserId || !API_URL) {
+      window.missingClockNoticeV62 = null;
+      return;
+    }
+
+    const cbName = 'missingClockCallbackV62_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+
+    const params = {
+      action: 'checkMissingClockRecords',
+      userId: lineUserId,
+      callback: cbName,
+      _t: Date.now()
+    };
+
+    const query = Object.keys(params)
+      .map(function (key) {
+        return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
+      })
+      .join('&');
+
+    const script = document.createElement('script');
+    script.src = API_URL + '?' + query;
+
+    let done = false;
+
+    const timer = setTimeout(function () {
+      cleanup();
+    }, 6000);
+
+    window[cbName] = function (res) {
+      if (done) return;
+      done = true;
+      cleanup();
+
+      if (res && res.ok && res.hasMissing) {
+        window.missingClockNoticeV62 = res;
+        prependMissingClockWarningV62();
+      } else {
+        window.missingClockNoticeV62 = null;
+      }
+    };
+
+    script.onerror = function () {
+      cleanup();
+    };
+
+    function cleanup() {
+      clearTimeout(timer);
+      try {
+        delete window[cbName];
+      } catch (e) {
+        window[cbName] = undefined;
+      }
+
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    }
+
+    document.body.appendChild(script);
+  }
+
+  const originalSendClockV62 = typeof window.sendClock === 'function' ? window.sendClock : null;
+
+  window.sendClock = function (type) {
+    window.missingClockNoticeV62 = null;
+
+    if (typeof originalSendClockV62 === 'function') {
+      originalSendClockV62.call(window, type);
+    }
+
+    // 不阻擋原本打卡流程；背景查詢後，只負責把紅字提醒補到畫面最上方。
+    safeCheckMissingClockNoticeV62();
+  };
+
+  const originalSetSendingStatusV62 = typeof window.setSendingStatus === 'function' ? window.setSendingStatus : null;
+
+  window.setSendingStatus = function (type) {
+    if (typeof originalSetSendingStatusV62 === 'function') {
+      originalSetSendingStatusV62.call(window, type);
+    }
+
+    prependMissingClockWarningV62();
+  };
+
+  const originalShowClockSuccessV62 = typeof window.showClockSuccess === 'function' ? window.showClockSuccess : null;
+
+  window.showClockSuccess = function (res, type) {
+    if (typeof originalShowClockSuccessV62 === 'function') {
+      originalShowClockSuccessV62.call(window, res, type);
+    }
+
+    prependMissingClockWarningV62();
+  };
+
+  const originalSetStatusV62 = typeof window.setStatus === 'function' ? window.setStatus : null;
+
+  window.setStatus = function (text) {
+    if (typeof originalSetStatusV62 === 'function') {
+      originalSetStatusV62.call(window, text);
+    }
+
+    prependMissingClockWarningV62();
+  };
+
+  setTimeout(function () {
+    try {
+      const footer = document.querySelector('.footer');
+      if (footer && footer.innerText.indexOf('前端 V62') === -1) {
+        footer.innerText = footer.innerText + '｜前端 V62 未打卡提醒';
+      }
+    } catch (e) {}
+  }, 1300);
+})();
+</script>
+
 </body>
 </html>
