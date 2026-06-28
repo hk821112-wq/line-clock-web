@@ -6677,5 +6677,538 @@ textarea:focus{
 }
 </style>
 
+
+
+<!-- =====================================================
+V65 極簡液態玻璃排版
+目的：移除框包框、降低裝飾線條、字體更飽滿、按鈕更直覺
+===================================================== -->
+<style id="clock-minimal-liquid-v65">
+:root{
+  --v65-bg:#070a10;
+  --v65-surface:rgba(255,255,255,.075);
+  --v65-surface-2:rgba(255,255,255,.105);
+  --v65-text:#f7fbff;
+  --v65-sub:#aab7c7;
+  --v65-line:rgba(255,255,255,.08);
+  --v65-blue:#8cc7ff;
+  --v65-green:#67e8ae;
+  --v65-red:#ff7777;
+  --v65-yellow:#ffd76f;
+  --v65-shadow:0 20px 55px rgba(0,0,0,.34);
+}
+
+html,
+body{
+  min-height:100% !important;
+  background:var(--v65-bg) !important;
+}
+
+body{
+  color:var(--v65-text) !important;
+  background:
+    radial-gradient(circle at 50% -12%, rgba(140,199,255,.28), transparent 36%),
+    radial-gradient(circle at 12% 72%, rgba(103,232,174,.12), transparent 30%),
+    radial-gradient(circle at 90% 84%, rgba(255,119,119,.10), transparent 28%),
+    linear-gradient(180deg,#080b12 0%,#0b1018 46%,#06080d 100%) !important;
+}
+
+body::before{
+  content:"" !important;
+  position:fixed !important;
+  inset:0 !important;
+  background:
+    radial-gradient(circle at 26% 20%, rgba(255,255,255,.08), transparent 18%),
+    radial-gradient(circle at 76% 12%, rgba(255,255,255,.06), transparent 16%) !important;
+  filter:blur(26px) !important;
+  opacity:.8 !important;
+  pointer-events:none !important;
+  z-index:0 !important;
+}
+
+body::after{
+  display:none !important;
+}
+
+.wrap{
+  width:min(500px,100%) !important;
+  min-height:100vh !important;
+  margin:0 auto !important;
+  padding:24px 18px 22px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:center !important;
+  position:relative !important;
+  z-index:1 !important;
+}
+
+.header{
+  padding:0 2px 18px !important;
+  margin:0 !important;
+  text-align:left !important;
+  border:0 !important;
+}
+
+.header::before,
+.header::after{
+  display:none !important;
+}
+
+.brand{
+  margin:0 0 8px !important;
+  color:var(--v65-text) !important;
+  font-size:38px !important;
+  line-height:.96 !important;
+  font-weight:1000 !important;
+  letter-spacing:-1.4px !important;
+  text-shadow:0 18px 38px rgba(0,0,0,.32) !important;
+}
+
+.subtitle{
+  color:var(--v65-sub) !important;
+  font-size:15px !important;
+  font-weight:800 !important;
+  letter-spacing:.8px !important;
+}
+
+/* 直接取消外層框，避免框包框 */
+.card{
+  margin:0 !important;
+  padding:0 !important;
+  background:transparent !important;
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  overflow:visible !important;
+}
+
+.card::before,
+.card::after{
+  display:none !important;
+}
+
+/* 狀態只保留一個乾淨玻璃面 */
+.status{
+  margin:0 0 14px !important;
+  padding:18px 18px !important;
+  color:var(--v65-text) !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.115), rgba(255,255,255,.055)),
+    rgba(255,255,255,.055) !important;
+  border:1px solid var(--v65-line) !important;
+  border-left:0 !important;
+  border-radius:28px !important;
+  box-shadow:var(--v65-shadow) !important;
+  backdrop-filter:blur(22px) saturate(145%) !important;
+  -webkit-backdrop-filter:blur(22px) saturate(145%) !important;
+  font-size:16px !important;
+  line-height:1.78 !important;
+  font-weight:750 !important;
+  letter-spacing:.15px !important;
+}
+
+.section-title,
+.mini-title{
+  margin:10px 2px 8px !important;
+  color:var(--v65-sub) !important;
+  font-size:13px !important;
+  font-weight:900 !important;
+  letter-spacing:.8px !important;
+}
+
+.section-title::before,
+.mini-title::before{
+  display:none !important;
+}
+
+#bindBox,
+#homeBox{
+  position:relative !important;
+  z-index:1 !important;
+}
+
+/* 首頁打卡區：沒有外框，只是四顆大按鈕 */
+#homeBox:not(.hidden){
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:12px !important;
+}
+
+#homeBox .section-title{
+  grid-column:1 / -1 !important;
+  margin:0 2px 2px !important;
+  color:rgba(247,251,255,.74) !important;
+  font-size:13px !important;
+}
+
+button{
+  width:100% !important;
+  min-height:56px !important;
+  margin:0 !important;
+  padding:15px 16px !important;
+  border:0 !important;
+  border-radius:22px !important;
+  color:var(--v65-text) !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.065)),
+    rgba(255,255,255,.065) !important;
+  box-shadow:0 14px 32px rgba(0,0,0,.22) !important;
+  backdrop-filter:blur(18px) saturate(140%) !important;
+  -webkit-backdrop-filter:blur(18px) saturate(140%) !important;
+  font-size:16px !important;
+  font-weight:1000 !important;
+  letter-spacing:.2px !important;
+  transition:transform .12s ease, background .12s ease, opacity .12s ease !important;
+}
+
+button:active{
+  transform:scale(.985) !important;
+}
+
+button:disabled{
+  opacity:.46 !important;
+  filter:saturate(.7) !important;
+}
+
+.btn-main,
+.btn-secondary,
+.btn-bind,
+.btn-outline,
+.record-active,
+.record-inactive,
+.btn-danger,
+.delete-confirm-ok-v591,
+.delete-confirm-cancel-v591{
+  border:0 !important;
+}
+
+#homeBox .btn-main{
+  min-height:118px !important;
+  padding:18px 16px 16px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:flex-end !important;
+  align-items:flex-start !important;
+  text-align:left !important;
+  overflow:hidden !important;
+  border-left:0 !important;
+}
+
+#homeBox .btn-main::before{
+  position:absolute !important;
+  left:14px !important;
+  top:13px !important;
+  height:auto !important;
+  min-width:0 !important;
+  padding:0 !important;
+  background:transparent !important;
+  border:0 !important;
+  color:rgba(255,255,255,.62) !important;
+  font-size:10px !important;
+  font-weight:1000 !important;
+  letter-spacing:1.8px !important;
+}
+
+#homeBox .btn-main::after{
+  content:"" !important;
+  position:absolute !important;
+  right:-28px !important;
+  bottom:-30px !important;
+  width:96px !important;
+  height:96px !important;
+  border-radius:50% !important;
+  background:rgba(255,255,255,.08) !important;
+}
+
+#homeBox .btn-main:nth-of-type(1){
+  background:
+    radial-gradient(circle at 85% 90%, rgba(103,232,174,.24), transparent 44%),
+    linear-gradient(180deg, rgba(255,255,255,.13), rgba(255,255,255,.055)),
+    rgba(255,255,255,.06) !important;
+}
+
+#homeBox .btn-main:nth-of-type(2){
+  background:
+    radial-gradient(circle at 85% 90%, rgba(255,119,119,.24), transparent 44%),
+    linear-gradient(180deg, rgba(255,255,255,.13), rgba(255,255,255,.055)),
+    rgba(255,255,255,.06) !important;
+}
+
+#homeBox .btn-main:nth-of-type(3){
+  background:
+    radial-gradient(circle at 85% 90%, rgba(255,215,111,.22), transparent 44%),
+    linear-gradient(180deg, rgba(255,255,255,.13), rgba(255,255,255,.055)),
+    rgba(255,255,255,.06) !important;
+}
+
+#homeBox .btn-main:nth-of-type(4){
+  background:
+    radial-gradient(circle at 85% 90%, rgba(140,199,255,.24), transparent 44%),
+    linear-gradient(180deg, rgba(255,255,255,.13), rgba(255,255,255,.055)),
+    rgba(255,255,255,.06) !important;
+}
+
+#homeBox .btn-outline{
+  grid-column:1 / -1 !important;
+  min-height:54px !important;
+  background:rgba(255,255,255,.055) !important;
+}
+
+/* 讓文字更「包滿」：首頁按鈕字更大更厚 */
+#homeBox .btn-main{
+  font-size:21px !important;
+  line-height:1.05 !important;
+  letter-spacing:-.5px !important;
+}
+
+input,
+select,
+textarea{
+  margin:0 0 10px !important;
+  padding:15px 16px !important;
+  color:var(--v65-text) !important;
+  background:rgba(255,255,255,.07) !important;
+  border:0 !important;
+  border-radius:20px !important;
+  box-shadow:none !important;
+  backdrop-filter:blur(16px) saturate(135%) !important;
+  -webkit-backdrop-filter:blur(16px) saturate(135%) !important;
+  font-size:16px !important;
+  font-weight:800 !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+  box-shadow:0 0 0 4px rgba(140,199,255,.14) !important;
+  outline:none !important;
+}
+
+/* 表單、成功內容不再使用一堆內框 */
+.success-card{
+  padding:0 !important;
+}
+
+.success-icon{
+  width:72px !important;
+  height:72px !important;
+  margin:0 auto 14px !important;
+  border:0 !important;
+  border-radius:24px !important;
+  background:rgba(103,232,174,.12) !important;
+  box-shadow:none !important;
+}
+
+.success-title,
+.status-blocked-title{
+  margin:0 0 10px !important;
+  color:var(--v65-text) !important;
+  font-size:28px !important;
+  line-height:1.08 !important;
+  font-weight:1000 !important;
+  letter-spacing:-.8px !important;
+}
+
+.success-time{
+  margin:8px 0 16px !important;
+  color:var(--v65-text) !important;
+  font-size:48px !important;
+  line-height:.96 !important;
+  font-weight:1000 !important;
+  letter-spacing:-1.8px !important;
+  text-shadow:none !important;
+}
+
+.success-list{
+  margin:10px 0 !important;
+  padding:4px 0 !important;
+  background:transparent !important;
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+}
+
+.success-row{
+  padding:10px 0 !important;
+  border-bottom:1px solid rgba(255,255,255,.075) !important;
+}
+
+.success-label{
+  color:rgba(247,251,255,.52) !important;
+  font-size:13px !important;
+  font-weight:900 !important;
+}
+
+.success-value{
+  color:var(--v65-text) !important;
+  font-size:16px !important;
+  font-weight:950 !important;
+}
+
+.success-note,
+.form-note,
+.sending-status,
+.status-blocked .status-blocked-message,
+.pending-delete-item-v59{
+  margin:10px 0 !important;
+  padding:14px 15px !important;
+  color:rgba(247,251,255,.82) !important;
+  background:rgba(255,255,255,.07) !important;
+  border:0 !important;
+  border-left:0 !important;
+  border-radius:20px !important;
+  box-shadow:none !important;
+}
+
+.sending-title{
+  color:var(--v65-green) !important;
+  font-size:22px !important;
+  font-weight:1000 !important;
+  letter-spacing:-.4px !important;
+}
+
+.sending-action{
+  color:var(--v65-text) !important;
+  font-size:26px !important;
+  font-weight:1000 !important;
+  letter-spacing:-.8px !important;
+}
+
+.records-tabs{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:10px !important;
+  margin:0 0 12px !important;
+}
+
+.records-tabs button{
+  min-height:50px !important;
+  font-size:15px !important;
+  border-radius:18px !important;
+}
+
+.record-active{
+  background:rgba(140,199,255,.18) !important;
+}
+
+.status-blocked-icon{
+  margin-bottom:10px !important;
+  font-size:48px !important;
+  filter:none !important;
+}
+
+.status-blocked-title{
+  color:var(--v65-red) !important;
+}
+
+.replace-warning-title{
+  color:var(--v65-red) !important;
+}
+
+/* 未打卡提醒：保留醒目，但不做框中框 */
+.missing-clock-warning-v62{
+  margin:0 0 12px !important;
+  padding:14px 15px !important;
+  color:#fff !important;
+  background:
+    radial-gradient(circle at 90% 90%, rgba(255,119,119,.22), transparent 44%),
+    rgba(255,119,119,.135) !important;
+  border:0 !important;
+  border-left:0 !important;
+  border-radius:22px !important;
+  box-shadow:none !important;
+  font-size:18px !important;
+  line-height:1.5 !important;
+  font-weight:1000 !important;
+  letter-spacing:-.2px !important;
+  animation:missingClockV65 1.7s ease-in-out infinite !important;
+}
+
+@keyframes missingClockV65{
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:.88;transform:scale(.992)}
+}
+
+.tips{
+  margin:13px 0 0 !important;
+  color:rgba(247,251,255,.50) !important;
+  font-size:12px !important;
+  line-height:1.55 !important;
+  font-weight:750 !important;
+}
+
+.tips::before{
+  background:rgba(255,255,255,.08) !important;
+  color:rgba(247,251,255,.72) !important;
+  border:0 !important;
+  border-radius:999px !important;
+}
+
+.footer{
+  margin:14px 0 0 !important;
+  color:rgba(247,251,255,.30) !important;
+  font-size:10px !important;
+}
+
+.delete-confirm-overlay-v591{
+  background:rgba(5,8,13,.58) !important;
+  backdrop-filter:blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter:blur(16px) saturate(140%) !important;
+}
+
+.delete-confirm-box-v591{
+  background:rgba(18,24,34,.78) !important;
+  border:0 !important;
+  border-left:0 !important;
+  border-radius:26px !important;
+  box-shadow:0 24px 70px rgba(0,0,0,.42) !important;
+}
+
+@media(max-width:430px){
+  .wrap{
+    padding:20px 14px 18px !important;
+    justify-content:flex-start !important;
+  }
+
+  .brand{
+    font-size:34px !important;
+  }
+
+  .subtitle{
+    font-size:14px !important;
+  }
+
+  .status{
+    padding:16px !important;
+    border-radius:24px !important;
+  }
+
+  #homeBox:not(.hidden){
+    gap:10px !important;
+  }
+
+  #homeBox .btn-main{
+    min-height:108px !important;
+    font-size:20px !important;
+    border-radius:22px !important;
+  }
+
+  .success-title,
+  .status-blocked-title{
+    font-size:25px !important;
+  }
+
+  .success-time{
+    font-size:43px !important;
+  }
+
+  .missing-clock-warning-v62{
+    font-size:17px !important;
+  }
+}
+</style>
+
 </body>
 </html>
