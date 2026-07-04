@@ -5463,5 +5463,333 @@ setTimeout(function () {
 }
 </style>
 
+
+<!-- =====================================================
+前端 V70：只顯示本月未打卡提醒，並列出未打卡日期
+後端 action：checkMissingClockRecords
+===================================================== -->
+<style>
+.missing-clock-warning-v70 {
+  white-space: pre-line !important;
+}
+</style>
+
+<script>
+(function () {
+  const MISSING_CLOCK_FRONT_PATCH_V70 = 'V70_CURRENT_MONTH_MISSING_DATES';
+  const MISSING_CLOCK_WARNING_BASE_V70 =
+    '有未打卡紀錄\n' +
+    '請查看打卡紀錄 並補卡!\n' +
+    '補卡完畢請告知主管';
+
+  window.missingClockNoticeV70 = null;
+  window.missingClockRequestSerialV70 = 0;
+
+  function pad2V70(value) {
+    return String(value).padStart(2, '0');
+  }
+
+  function getCurrentMonthKeyV70() {
+    const now = new Date();
+    return now.getFullYear() + '/' + pad2V70(now.getMonth() + 1);
+  }
+
+  function normalizeMissingDateV70(value) {
+    const text = String(value || '').trim();
+    const match = text.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+
+    if (!match) {
+      return '';
+    }
+
+    return (
+      match[1] + '/' +
+      pad2V70(match[2]) + '/' +
+      pad2V70(match[3])
+    );
+  }
+
+  function getMissingRecordsV70(res) {
+    res = res || {};
+
+    if (Array.isArray(res.records)) {
+      return res.records;
+    }
+
+    if (Array.isArray(res.missingRecords)) {
+      return res.missingRecords;
+    }
+
+    if (Array.isArray(res.missingDates)) {
+      return res.missingDates;
+    }
+
+    if (Array.isArray(res.dates)) {
+      return res.dates;
+    }
+
+    return [];
+  }
+
+  function extractCurrentMonthMissingDatesV70(res) {
+    const currentMonth = getCurrentMonthKeyV70();
+    const uniqueMap = {};
+
+    getMissingRecordsV70(res).forEach(function (item) {
+      let rawDate = '';
+
+      if (typeof item === 'string') {
+        rawDate = item;
+      } else if (item) {
+        rawDate =
+          item.date ||
+          item.dateText ||
+          item.workDate ||
+          item.missingDate ||
+          '';
+      }
+
+      const date = normalizeMissingDateV70(rawDate);
+
+      if (!date || date.indexOf(currentMonth + '/') !== 0) {
+        return;
+      }
+
+      uniqueMap[date] = true;
+    });
+
+    return Object.keys(uniqueMap).sort(function (a, b) {
+      return String(a).localeCompare(String(b));
+    });
+  }
+
+  function removeMissingClockWarningsV70() {
+    const warnings = document.querySelectorAll('.missing-clock-warning-v62');
+
+    Array.prototype.forEach.call(warnings, function (warning) {
+      if (warning && warning.parentNode) {
+        warning.parentNode.removeChild(warning);
+      }
+    });
+  }
+
+  function buildMissingClockWarningTextV70(dates) {
+    let text = MISSING_CLOCK_WARNING_BASE_V70;
+
+    if (dates && dates.length > 0) {
+      text += '\n' + dates.map(function (date) {
+        return date + ' 有未打卡';
+      }).join('\n');
+    }
+
+    return text;
+  }
+
+  function escapeMissingClockHtmlV70(text) {
+    if (typeof window.escapeHtml === 'function') {
+      return window.escapeHtml(text);
+    }
+
+    return String(text || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function hasCurrentMonthMissingClockV70() {
+    return !!(
+      window.missingClockNoticeV70 &&
+      Array.isArray(window.missingClockNoticeV70.dates) &&
+      window.missingClockNoticeV70.dates.length > 0
+    );
+  }
+
+  function prependMissingClockWarningV70() {
+    const statusBox = document.getElementById('status');
+
+    if (!statusBox) {
+      return;
+    }
+
+    removeMissingClockWarningsV70();
+
+    if (!hasCurrentMonthMissingClockV70()) {
+      return;
+    }
+
+    const text = buildMissingClockWarningTextV70(
+      window.missingClockNoticeV70.dates
+    );
+
+    statusBox.insertAdjacentHTML(
+      'afterbegin',
+      '<div class="missing-clock-warning-v62 missing-clock-warning-v70">' +
+        escapeMissingClockHtmlV70(text) +
+      '</div>'
+    );
+  }
+
+  function checkCurrentMonthMissingClockV70() {
+    if (!lineUserId || !API_URL) {
+      window.missingClockNoticeV70 = null;
+      removeMissingClockWarningsV70();
+      return;
+    }
+
+    const requestSerial = ++window.missingClockRequestSerialV70;
+    const cbName =
+      'missingClockCallbackV70_' +
+      Date.now() +
+      '_' +
+      Math.floor(Math.random() * 100000);
+
+    const params = {
+      action: 'checkMissingClockRecords',
+      userId: lineUserId,
+      callback: cbName,
+      frontendPatch: MISSING_CLOCK_FRONT_PATCH_V70,
+      currentMonthOnly: 'true',
+      includeMissingDates: 'true',
+      _t: Date.now()
+    };
+
+    const query = Object.keys(params)
+      .map(function (key) {
+        return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
+      })
+      .join('&');
+
+    const script = document.createElement('script');
+    script.src = API_URL + '?' + query;
+
+    let finished = false;
+
+    const timer = setTimeout(function () {
+      cleanup();
+    }, 7000);
+
+    window[cbName] = function (res) {
+      if (finished) {
+        return;
+      }
+
+      finished = true;
+      cleanup();
+
+      if (requestSerial !== window.missingClockRequestSerialV70) {
+        return;
+      }
+
+      const dates = res && res.ok
+        ? extractCurrentMonthMissingDatesV70(res)
+        : [];
+
+      if (dates.length > 0) {
+        window.missingClockNoticeV70 = {
+          hasMissing: true,
+          dates: dates,
+          response: res || {}
+        };
+
+        // 同步舊版狀態，避免舊 V62 再插入固定文字。
+        window.missingClockNoticeV62 = {
+          hasMissing: true
+        };
+      } else {
+        window.missingClockNoticeV70 = null;
+        window.missingClockNoticeV62 = null;
+      }
+
+      prependMissingClockWarningV70();
+
+      // 再覆蓋一次，避免舊 V62 的非同步回呼稍晚插入舊文字。
+      setTimeout(function () {
+        prependMissingClockWarningV70();
+      }, 250);
+    };
+
+    script.onerror = function () {
+      cleanup();
+    };
+
+    function cleanup() {
+      clearTimeout(timer);
+
+      try {
+        delete window[cbName];
+      } catch (e) {
+        window[cbName] = undefined;
+      }
+
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    }
+
+    document.body.appendChild(script);
+  }
+
+  const originalSendClockV70 =
+    typeof window.sendClock === 'function'
+      ? window.sendClock
+      : null;
+
+  window.sendClock = function (type) {
+    window.missingClockNoticeV70 = null;
+    removeMissingClockWarningsV70();
+
+    if (typeof originalSendClockV70 === 'function') {
+      originalSendClockV70.call(window, type);
+    }
+
+    // 稍晚啟動，確保結果最後覆蓋舊 V62 提醒。
+    setTimeout(function () {
+      checkCurrentMonthMissingClockV70();
+    }, 120);
+  };
+
+  const originalSetSendingStatusV70 =
+    typeof window.setSendingStatus === 'function'
+      ? window.setSendingStatus
+      : null;
+
+  window.setSendingStatus = function (type) {
+    if (typeof originalSetSendingStatusV70 === 'function') {
+      originalSetSendingStatusV70.call(window, type);
+    }
+
+    prependMissingClockWarningV70();
+  };
+
+  const originalShowClockSuccessV70 =
+    typeof window.showClockSuccess === 'function'
+      ? window.showClockSuccess
+      : null;
+
+  window.showClockSuccess = function (res, type) {
+    if (typeof originalShowClockSuccessV70 === 'function') {
+      originalShowClockSuccessV70.call(window, res, type);
+    }
+
+    prependMissingClockWarningV70();
+  };
+
+  const originalSetStatusV70 =
+    typeof window.setStatus === 'function'
+      ? window.setStatus
+      : null;
+
+  window.setStatus = function (text) {
+    if (typeof originalSetStatusV70 === 'function') {
+      originalSetStatusV70.call(window, text);
+    }
+
+    prependMissingClockWarningV70();
+  };
+})();
+</script>
+
 </body>
 </html>
