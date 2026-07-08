@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>小時候打卡｜員工工作台</title>
+  <title>小時候打卡｜像素電玩版</title>
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js">
 
@@ -713,7 +713,7 @@ textarea {
 
 </head>
 
-<body>
+<body class="theme-pixel">
   <div class="ambient ambient-one"></div>
   <div class="ambient ambient-two"></div>
 
@@ -728,7 +728,7 @@ textarea {
             </svg>
           </div>
           <div>
-            <div class="brand-kicker">STAFF ATTENDANCE</div>
+            <div class="brand-kicker">PLAYER ATTENDANCE</div>
             <div class="brand">小時候打卡</div>
           </div>
         </div>
@@ -753,8 +753,8 @@ textarea {
     <main class="workspace-card">
       <div class="workspace-heading">
         <div>
-          <span class="workspace-kicker">WORKSPACE</span>
-          <h1>員工工作台</h1>
+          <span class="workspace-kicker">SELECT ACTION</span>
+          <h1>員工任務選單</h1>
         </div>
         <div class="secure-badge">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -6849,6 +6849,84 @@ setTimeout(function () {
       min-height: 118px;
     }
   }
+</style>
+
+
+<style id="theme-pixel-v1">
+body.theme-pixel {
+  --ink:#f4f7ff; --ink-soft:#c7d2ee; --muted:#8291b3; --line:#31405f;
+  --blue:#4fdcff; --blue-soft:#142f43; --danger:#ff527d;
+  background:
+    linear-gradient(rgba(47,63,100,.20) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(47,63,100,.20) 1px,transparent 1px),
+    linear-gradient(180deg,#11172a,#090d19);
+  background-size:22px 22px,22px 22px,auto;
+  color:var(--ink);
+  font-family:"Microsoft JhengHei","Courier New",monospace;
+}
+body.theme-pixel .ambient {display:none}
+body.theme-pixel .wrap.app-shell {max-width:560px;padding:18px 13px 30px}
+body.theme-pixel .app-header {padding-bottom:15px}
+body.theme-pixel .brand-mark {border:2px solid #4fdcff;border-radius:4px;background:#17243d;box-shadow:5px 5px 0 #0a0e18;color:#4fdcff}
+body.theme-pixel .brand-kicker, body.theme-pixel .workspace-kicker {color:#4fdcff;font-family:"Courier New",monospace;letter-spacing:1.5px}
+body.theme-pixel .brand {color:#fff;font-size:23px;letter-spacing:0;text-shadow:3px 3px 0 #713cff}
+body.theme-pixel .connection-chip {color:#74ffc7;border:2px solid #3bc995;border-radius:3px;background:#10271f;box-shadow:4px 4px 0 #060a11}
+body.theme-pixel .connection-chip span {border-radius:0;background:#74ffc7;box-shadow:none}
+body.theme-pixel .today-card, body.theme-pixel .profile-card {border:2px solid #354668;border-radius:5px;background:#151e33;box-shadow:5px 5px 0 #080b13}
+body.theme-pixel .today-card span, body.theme-pixel .profile-copy span {color:#8291b3}
+body.theme-pixel .today-card strong, body.theme-pixel .profile-copy strong {color:#fff}
+body.theme-pixel .profile-avatar {border:2px solid #ff5bd7;border-radius:4px;background:#27183b;box-shadow:4px 4px 0 #0a0d16;color:#ff76dc}
+body.theme-pixel .workspace-card {border:3px solid #455a87;border-radius:7px;background:#10182b;box-shadow:8px 8px 0 #05070c,0 28px 60px rgba(0,0,0,.45)}
+body.theme-pixel .workspace-heading {padding-bottom:13px;border-bottom:2px dashed #31405f}
+body.theme-pixel .workspace-heading h1 {color:#fff;font-family:"Courier New","Microsoft JhengHei",monospace;font-size:21px;letter-spacing:0}
+body.theme-pixel .secure-badge {color:#ffd557;border:2px solid #9b7b1c;border-radius:3px;background:#2c2512}
+body.theme-pixel .panel-caption {color:#8291b3;font-family:"Courier New",monospace}
+body.theme-pixel .pulse-dot {border-radius:0;background:#4fdcff;box-shadow:none;animation:pixelBlink 1s steps(2,end) infinite}
+@keyframes pixelBlink{50%{opacity:.15}}
+body.theme-pixel .status {color:#cbd7f3;border:2px solid #31405f;border-radius:4px;background:#0b1120;box-shadow:inset 3px 3px 0 #070a11;font-family:"Courier New","Microsoft JhengHei",monospace}
+body.theme-pixel .section-title {color:#fff}
+body.theme-pixel .section-description, body.theme-pixel .utility-label {color:#8291b3}
+body.theme-pixel .section-tag {color:#4fdcff;border:2px solid #2e7690;border-radius:2px;background:#102d3a}
+body.theme-pixel .clock-grid {gap:10px}
+body.theme-pixel .action-card {min-height:150px;border:3px solid;border-radius:4px;box-shadow:6px 6px 0 #05070c;transition:none}
+body.theme-pixel .action-card:active {transform:translate(4px,4px);box-shadow:2px 2px 0 #05070c}
+body.theme-pixel .action-card:after {border-radius:0;opacity:.08}
+body.theme-pixel .action-workin {color:#63e4ff;border-color:#328ca3;background:#112d3c}
+body.theme-pixel .action-workout {color:#ff79d8;border-color:#a63d8c;background:#351734;box-shadow:6px 6px 0 #05070c}
+body.theme-pixel .action-break-start {color:#ffd95e;border-color:#a98627;background:#352d12}
+body.theme-pixel .action-break-end {color:#72ffc3;border-color:#34966e;background:#123327}
+body.theme-pixel .action-icon {border:2px solid currentColor;border-radius:2px;background:rgba(0,0,0,.23)}
+body.theme-pixel .action-workout .action-icon {color:#ff79d8}
+body.theme-pixel .action-copy strong {font-family:"Courier New","Microsoft JhengHei",monospace;letter-spacing:0}
+body.theme-pixel .action-arrow {font-family:"Courier New",monospace}
+body.theme-pixel .utility-button {color:#eaf0ff;border:2px solid #3c4f76;border-radius:4px;background:#18233b;box-shadow:5px 5px 0 #05070c}
+body.theme-pixel .utility-icon {color:#4fdcff;border:2px solid #337b91;border-radius:2px;background:#102d3a}
+body.theme-pixel .utility-button strong {color:#fff}
+body.theme-pixel .utility-button small {color:#8291b3}
+body.theme-pixel input, body.theme-pixel select, body.theme-pixel textarea {color:#f5f8ff;border:2px solid #3a4b70;border-radius:3px;background:#0b1120;font-family:inherit}
+body.theme-pixel input:focus, body.theme-pixel select:focus, body.theme-pixel textarea:focus {border-color:#4fdcff;box-shadow:4px 4px 0 #173f4d}
+body.theme-pixel #makeupStore, body.theme-pixel #makeupType, body.theme-pixel .makeup-center-select-v591 {color:#4fdcff !important;background:#0b1120 !important}
+body.theme-pixel .btn-main, body.theme-pixel .btn-bind {color:#071019;background:#4fdcff;box-shadow:5px 5px 0 #1b6a7d;border:2px solid #a9f2ff;border-radius:3px}
+body.theme-pixel .btn-secondary {color:#fff;background:#7039d9;box-shadow:5px 5px 0 #321b68;border:2px solid #b896ff;border-radius:3px}
+body.theme-pixel .btn-outline {color:#dbe5ff;border:2px solid #485d88;background:#172238;border-radius:3px}
+body.theme-pixel .btn-danger {border:2px solid #ff9ab1;border-radius:3px;box-shadow:5px 5px 0 #7d243b}
+body.theme-pixel .location-note {color:#aebbd9;border:2px dashed #3c4c70;border-radius:3px;background:#0d1424}
+body.theme-pixel .location-note svg {color:#4fdcff}
+body.theme-pixel .success-icon {color:#07150f;border:3px solid #a6ffd5;border-radius:3px;background:#62f0ac;box-shadow:6px 6px 0 #1d754d}
+body.theme-pixel .success-title, body.theme-pixel .success-time {color:#fff;font-family:"Courier New","Microsoft JhengHei",monospace}
+body.theme-pixel .success-list {border:2px solid #354668;border-radius:3px;background:#0b1120}
+body.theme-pixel .success-row {border-color:#263552}
+body.theme-pixel .success-label {color:#8291b3}
+body.theme-pixel .success-value {color:#eef3ff}
+body.theme-pixel .success-note, body.theme-pixel .form-note {color:#ffe18a;border:2px solid #766126;border-radius:3px;background:#29230f}
+body.theme-pixel .records-tabs {border:2px solid #354668;border-radius:3px;background:#0b1120}
+body.theme-pixel .records-tabs button {border-radius:2px}
+body.theme-pixel .record-active {color:#071019 !important;background:#4fdcff !important;box-shadow:none !important}
+body.theme-pixel .record-inactive {color:#8291b3 !important}
+body.theme-pixel .status-blocked-message, body.theme-pixel .sending-status {color:#cbd7f3}
+body.theme-pixel .sending-title {color:#fff}
+body.theme-pixel .sending-action {color:#4fdcff}
+body.theme-pixel .footer {color:#657391;font-family:"Courier New",monospace}
 </style>
 
 <script id="workspace-ui-helper-v80">
