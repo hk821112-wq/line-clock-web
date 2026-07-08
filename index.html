@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>小時候打卡｜像素電玩版</title>
+  <title>小時候打卡系統 </title>
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js">
 
@@ -713,7 +713,7 @@ textarea {
 
 </head>
 
-<body class="theme-pixel">
+<body class="theme-cream">
   <div class="ambient ambient-one"></div>
   <div class="ambient ambient-two"></div>
 
@@ -728,7 +728,7 @@ textarea {
             </svg>
           </div>
           <div>
-            <div class="brand-kicker">PLAYER ATTENDANCE</div>
+            <div class="brand-kicker">HAPPY WORK DAY</div>
             <div class="brand">小時候打卡</div>
           </div>
         </div>
@@ -753,8 +753,8 @@ textarea {
     <main class="workspace-card">
       <div class="workspace-heading">
         <div>
-          <span class="workspace-kicker">SELECT ACTION</span>
-          <h1>員工任務選單</h1>
+          <span class="workspace-kicker">MY WORKSPACE</span>
+          <h1>今天也辛苦了</h1>
         </div>
         <div class="secure-badge">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -6852,81 +6852,61 @@ setTimeout(function () {
 </style>
 
 
-<style id="theme-pixel-v1">
-body.theme-pixel {
-  --ink:#f4f7ff; --ink-soft:#c7d2ee; --muted:#8291b3; --line:#31405f;
-  --blue:#4fdcff; --blue-soft:#142f43; --danger:#ff527d;
+<style id="theme-cream-v1">
+body.theme-cream {
+  --ink:#56483f; --ink-soft:#75645a; --muted:#a28f83; --line:#eaded4;
+  --blue:#e98291; --blue-soft:#fff0f2; --danger:#d95f6e;
+  min-height:100vh;
   background:
-    linear-gradient(rgba(47,63,100,.20) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(47,63,100,.20) 1px,transparent 1px),
-    linear-gradient(180deg,#11172a,#090d19);
-  background-size:22px 22px,22px 22px,auto;
+    radial-gradient(circle at 12% 8%, rgba(255,190,201,.42) 0 8px, transparent 9px),
+    radial-gradient(circle at 89% 14%, rgba(188,219,187,.50) 0 10px, transparent 11px),
+    radial-gradient(circle at 15% 74%, rgba(247,207,138,.35) 0 7px, transparent 8px),
+    linear-gradient(180deg,#fff8ef 0%,#fffdf8 48%,#f7efe8 100%);
   color:var(--ink);
-  font-family:"Microsoft JhengHei","Courier New",monospace;
 }
-body.theme-pixel .ambient {display:none}
-body.theme-pixel .wrap.app-shell {max-width:560px;padding:18px 13px 30px}
-body.theme-pixel .app-header {padding-bottom:15px}
-body.theme-pixel .brand-mark {border:2px solid #4fdcff;border-radius:4px;background:#17243d;box-shadow:5px 5px 0 #0a0e18;color:#4fdcff}
-body.theme-pixel .brand-kicker, body.theme-pixel .workspace-kicker {color:#4fdcff;font-family:"Courier New",monospace;letter-spacing:1.5px}
-body.theme-pixel .brand {color:#fff;font-size:23px;letter-spacing:0;text-shadow:3px 3px 0 #713cff}
-body.theme-pixel .connection-chip {color:#74ffc7;border:2px solid #3bc995;border-radius:3px;background:#10271f;box-shadow:4px 4px 0 #060a11}
-body.theme-pixel .connection-chip span {border-radius:0;background:#74ffc7;box-shadow:none}
-body.theme-pixel .today-card, body.theme-pixel .profile-card {border:2px solid #354668;border-radius:5px;background:#151e33;box-shadow:5px 5px 0 #080b13}
-body.theme-pixel .today-card span, body.theme-pixel .profile-copy span {color:#8291b3}
-body.theme-pixel .today-card strong, body.theme-pixel .profile-copy strong {color:#fff}
-body.theme-pixel .profile-avatar {border:2px solid #ff5bd7;border-radius:4px;background:#27183b;box-shadow:4px 4px 0 #0a0d16;color:#ff76dc}
-body.theme-pixel .workspace-card {border:3px solid #455a87;border-radius:7px;background:#10182b;box-shadow:8px 8px 0 #05070c,0 28px 60px rgba(0,0,0,.45)}
-body.theme-pixel .workspace-heading {padding-bottom:13px;border-bottom:2px dashed #31405f}
-body.theme-pixel .workspace-heading h1 {color:#fff;font-family:"Courier New","Microsoft JhengHei",monospace;font-size:21px;letter-spacing:0}
-body.theme-pixel .secure-badge {color:#ffd557;border:2px solid #9b7b1c;border-radius:3px;background:#2c2512}
-body.theme-pixel .panel-caption {color:#8291b3;font-family:"Courier New",monospace}
-body.theme-pixel .pulse-dot {border-radius:0;background:#4fdcff;box-shadow:none;animation:pixelBlink 1s steps(2,end) infinite}
-@keyframes pixelBlink{50%{opacity:.15}}
-body.theme-pixel .status {color:#cbd7f3;border:2px solid #31405f;border-radius:4px;background:#0b1120;box-shadow:inset 3px 3px 0 #070a11;font-family:"Courier New","Microsoft JhengHei",monospace}
-body.theme-pixel .section-title {color:#fff}
-body.theme-pixel .section-description, body.theme-pixel .utility-label {color:#8291b3}
-body.theme-pixel .section-tag {color:#4fdcff;border:2px solid #2e7690;border-radius:2px;background:#102d3a}
-body.theme-pixel .clock-grid {gap:10px}
-body.theme-pixel .action-card {min-height:150px;border:3px solid;border-radius:4px;box-shadow:6px 6px 0 #05070c;transition:none}
-body.theme-pixel .action-card:active {transform:translate(4px,4px);box-shadow:2px 2px 0 #05070c}
-body.theme-pixel .action-card:after {border-radius:0;opacity:.08}
-body.theme-pixel .action-workin {color:#63e4ff;border-color:#328ca3;background:#112d3c}
-body.theme-pixel .action-workout {color:#ff79d8;border-color:#a63d8c;background:#351734;box-shadow:6px 6px 0 #05070c}
-body.theme-pixel .action-break-start {color:#ffd95e;border-color:#a98627;background:#352d12}
-body.theme-pixel .action-break-end {color:#72ffc3;border-color:#34966e;background:#123327}
-body.theme-pixel .action-icon {border:2px solid currentColor;border-radius:2px;background:rgba(0,0,0,.23)}
-body.theme-pixel .action-workout .action-icon {color:#ff79d8}
-body.theme-pixel .action-copy strong {font-family:"Courier New","Microsoft JhengHei",monospace;letter-spacing:0}
-body.theme-pixel .action-arrow {font-family:"Courier New",monospace}
-body.theme-pixel .utility-button {color:#eaf0ff;border:2px solid #3c4f76;border-radius:4px;background:#18233b;box-shadow:5px 5px 0 #05070c}
-body.theme-pixel .utility-icon {color:#4fdcff;border:2px solid #337b91;border-radius:2px;background:#102d3a}
-body.theme-pixel .utility-button strong {color:#fff}
-body.theme-pixel .utility-button small {color:#8291b3}
-body.theme-pixel input, body.theme-pixel select, body.theme-pixel textarea {color:#f5f8ff;border:2px solid #3a4b70;border-radius:3px;background:#0b1120;font-family:inherit}
-body.theme-pixel input:focus, body.theme-pixel select:focus, body.theme-pixel textarea:focus {border-color:#4fdcff;box-shadow:4px 4px 0 #173f4d}
-body.theme-pixel #makeupStore, body.theme-pixel #makeupType, body.theme-pixel .makeup-center-select-v591 {color:#4fdcff !important;background:#0b1120 !important}
-body.theme-pixel .btn-main, body.theme-pixel .btn-bind {color:#071019;background:#4fdcff;box-shadow:5px 5px 0 #1b6a7d;border:2px solid #a9f2ff;border-radius:3px}
-body.theme-pixel .btn-secondary {color:#fff;background:#7039d9;box-shadow:5px 5px 0 #321b68;border:2px solid #b896ff;border-radius:3px}
-body.theme-pixel .btn-outline {color:#dbe5ff;border:2px solid #485d88;background:#172238;border-radius:3px}
-body.theme-pixel .btn-danger {border:2px solid #ff9ab1;border-radius:3px;box-shadow:5px 5px 0 #7d243b}
-body.theme-pixel .location-note {color:#aebbd9;border:2px dashed #3c4c70;border-radius:3px;background:#0d1424}
-body.theme-pixel .location-note svg {color:#4fdcff}
-body.theme-pixel .success-icon {color:#07150f;border:3px solid #a6ffd5;border-radius:3px;background:#62f0ac;box-shadow:6px 6px 0 #1d754d}
-body.theme-pixel .success-title, body.theme-pixel .success-time {color:#fff;font-family:"Courier New","Microsoft JhengHei",monospace}
-body.theme-pixel .success-list {border:2px solid #354668;border-radius:3px;background:#0b1120}
-body.theme-pixel .success-row {border-color:#263552}
-body.theme-pixel .success-label {color:#8291b3}
-body.theme-pixel .success-value {color:#eef3ff}
-body.theme-pixel .success-note, body.theme-pixel .form-note {color:#ffe18a;border:2px solid #766126;border-radius:3px;background:#29230f}
-body.theme-pixel .records-tabs {border:2px solid #354668;border-radius:3px;background:#0b1120}
-body.theme-pixel .records-tabs button {border-radius:2px}
-body.theme-pixel .record-active {color:#071019 !important;background:#4fdcff !important;box-shadow:none !important}
-body.theme-pixel .record-inactive {color:#8291b3 !important}
-body.theme-pixel .status-blocked-message, body.theme-pixel .sending-status {color:#cbd7f3}
-body.theme-pixel .sending-title {color:#fff}
-body.theme-pixel .sending-action {color:#4fdcff}
-body.theme-pixel .footer {color:#657391;font-family:"Courier New",monospace}
+body.theme-cream .ambient-one {background:rgba(244,174,187,.22); filter:blur(1px)}
+body.theme-cream .ambient-two {background:rgba(180,215,188,.20); filter:blur(1px)}
+body.theme-cream .wrap.app-shell {max-width:550px;padding:20px 15px 32px}
+body.theme-cream .brand-mark {border-radius:50%;background:linear-gradient(145deg,#ef91a0,#d87383);box-shadow:0 9px 0 #f6cbd2}
+body.theme-cream .brand-kicker, body.theme-cream .workspace-kicker {color:#b5897f;letter-spacing:1.2px}
+body.theme-cream .brand {color:#5d4a40;font-size:24px}
+body.theme-cream .connection-chip {color:#7b665c;border:2px solid #f0dfd6;background:#fffaf4;box-shadow:0 4px 0 #ead7cc}
+body.theme-cream .today-card, body.theme-cream .profile-card {border:2px solid #f0e0d5;background:#fffaf4;box-shadow:0 7px 0 rgba(221,196,181,.45);border-radius:24px}
+body.theme-cream .profile-avatar {border-radius:50%;background:linear-gradient(145deg,#8fb99b,#6fa37e);box-shadow:0 6px 0 #c7dfcd}
+body.theme-cream .workspace-card {position:relative;border:2px solid #ebd9cd;border-radius:34px;background:#fffdf8;box-shadow:0 15px 0 rgba(224,201,187,.55),0 30px 70px rgba(109,78,60,.10)}
+body.theme-cream .workspace-card:before {content:"";position:absolute;top:12px;left:28px;right:28px;height:2px;background:repeating-linear-gradient(90deg,#e9c8c1 0 8px,transparent 8px 16px);opacity:.7}
+body.theme-cream .secure-badge {color:#7a665d;background:#f8eee7;border:1px solid #ead8cc;border-radius:999px}
+body.theme-cream .panel-caption {color:#a48276}
+body.theme-cream .pulse-dot {background:#e98291;box-shadow:0 0 0 5px rgba(233,130,145,.13)}
+body.theme-cream .status {border:2px dashed #ead5c8;background:#fff8f1;color:#725e54;border-radius:21px}
+body.theme-cream .section-title {color:#5b4940}
+body.theme-cream .section-description, body.theme-cream .utility-label {color:#a08c81}
+body.theme-cream .section-tag {color:#b77c86;border:1px solid #efcbd1;background:#fff2f4}
+body.theme-cream .clock-grid {gap:12px}
+body.theme-cream .action-card {min-height:158px;border-width:2px;border-radius:28px;box-shadow:0 7px 0 rgba(137,105,88,.10)}
+body.theme-cream .action-card:before {content:"✦";position:absolute;right:14px;bottom:11px;font-size:14px;opacity:.22}
+body.theme-cream .action-workin {color:#a84f63;border-color:#f1cbd3;background:linear-gradient(145deg,#fff1f4,#ffe3e8)}
+body.theme-cream .action-workout {color:#fff;border-color:#83685c;background:linear-gradient(145deg,#796057,#59483f);box-shadow:0 8px 0 #d7c3b8}
+body.theme-cream .action-break-start {color:#8c6b2b;border-color:#f1dfad;background:linear-gradient(145deg,#fff9df,#fff0bd)}
+body.theme-cream .action-break-end {color:#557c62;border-color:#cce2d0;background:linear-gradient(145deg,#eff9ef,#dff1e2)}
+body.theme-cream .action-icon {border:2px solid rgba(255,255,255,.8);border-radius:50%;background:rgba(255,255,255,.68)}
+body.theme-cream .utility-button {border:2px solid #eadcd2;border-radius:22px;background:#fffaf5;box-shadow:0 5px 0 #eee0d7}
+body.theme-cream .utility-icon {color:#d77182;border-radius:50%;background:#ffe9ed}
+body.theme-cream input, body.theme-cream select, body.theme-cream textarea {color:#5d4a40;border:2px solid #ead8cd;border-radius:18px;background:#fffaf5}
+body.theme-cream input:focus, body.theme-cream select:focus, body.theme-cream textarea:focus {border-color:#e98291;box-shadow:0 0 0 4px rgba(233,130,145,.13)}
+body.theme-cream #makeupStore, body.theme-cream #makeupType, body.theme-cream .makeup-center-select-v591 {color:#d36879 !important}
+body.theme-cream .btn-main, body.theme-cream .btn-bind {background:linear-gradient(135deg,#ea8998,#d66d7e);box-shadow:0 7px 0 #f2c4cb;border-radius:18px}
+body.theme-cream .btn-secondary {background:#66534a;box-shadow:0 6px 0 #dac8bd;border-radius:18px}
+body.theme-cream .btn-outline {color:#69564d;border:2px solid #ead9ce;background:#fffaf4;border-radius:18px}
+body.theme-cream .location-note {color:#8c786e;border:2px dashed #ead7cc;background:#fff8f1;border-radius:18px}
+body.theme-cream .location-note svg {color:#db7788}
+body.theme-cream .success-icon {border-radius:50%;background:linear-gradient(145deg,#86b895,#68a37a);box-shadow:0 8px 0 #c9dfcf}
+body.theme-cream .success-list {border:2px solid #eaded5;background:#fffaf5;border-radius:20px}
+body.theme-cream .success-note, body.theme-cream .form-note {color:#80652d;border:2px solid #efdca9;background:#fff9df;border-radius:18px}
+body.theme-cream .records-tabs {background:#f3e9e1;border:1px solid #ead8cc;border-radius:18px}
+body.theme-cream .record-active {color:#9f5261 !important;background:#fffaf5 !important}
+body.theme-cream .footer {color:#aa9589}
+@media(max-width:390px){body.theme-cream .action-card{min-height:148px;border-radius:24px}}
 </style>
 
 <script id="workspace-ui-helper-v80">
