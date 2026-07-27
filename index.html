@@ -6897,7 +6897,7 @@ setTimeout(function () {
 
 
 <!-- =====================================================
-     前端 V81：補卡待審核支援多筆勾選、全選、一次通過
+     前端 V82：補卡批次審核逾時自動核對版
      - 沿用既有 approvePendingMakeupRequest API，依序處理避免寫入衝突
      - 成功：取消勾選並鎖定該筆
      - 失敗：保留勾選並在該筆下方顯示原因
@@ -7074,9 +7074,11 @@ setTimeout(function () {
     window.updatePendingBatchSelectionV81();
   };
 
-  function batchApiCallV81(params) {
+  function batchApiCallV82(params, timeoutMs) {
+    timeoutMs = Number(timeoutMs || 75000);
+
     return new Promise(function (resolve) {
-      const cbName = 'jsonpBatchReviewV81_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
+      const cbName = 'jsonpBatchReviewV82_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
       const payload = Object.assign({}, params || {});
       payload.callback = cbName;
       payload._t = Date.now();
@@ -7086,14 +7088,13 @@ setTimeout(function () {
       }).join('&');
 
       const script = document.createElement('script');
-      let finished = false;
+      let settled = false;
       let timer = null;
+      let lateCleanupTimer = null;
 
-      function finish(result) {
-        if (finished) return;
-        finished = true;
-
+      function cleanup() {
         if (timer) clearTimeout(timer);
+        if (lateCleanupTimer) clearTimeout(lateCleanupTimer);
 
         try {
           delete window[cbName];
@@ -7104,25 +7105,142 @@ setTimeout(function () {
         if (script.parentNode) {
           script.parentNode.removeChild(script);
         }
+      }
 
+      function finish(result) {
+        if (settled) return;
+        settled = true;
+        cleanup();
         resolve(result || { ok: false, message: '伺服器沒有回傳結果。' });
       }
 
       window[cbName] = function (res) {
+        if (settled) {
+          cleanup();
+          return;
+        }
         finish(res);
       };
 
       script.onerror = function () {
-        finish({ ok: false, message: '無法連接 Google Apps Script API。' });
+        finish({
+          ok: false,
+          code: 'NETWORK_ERROR',
+          uncertain: true,
+          message: '前端暫時無法取得伺服器回應。'
+        });
       };
 
       timer = setTimeout(function () {
-        finish({ ok: false, message: '連線逾時，請稍後重新勾選再試。' });
-      }, 20000);
+        if (settled) return;
+        settled = true;
+
+        // 不立刻刪除 JSONP callback，避免 Apps Script 晚到的回應造成錯誤。
+        // 後續會再查詢待審核清單，確認該筆是否其實已經處理完成。
+        window[cbName] = function () {
+          cleanup();
+        };
+
+        lateCleanupTimer = setTimeout(cleanup, 120000);
+
+        resolve({
+          ok: false,
+          code: 'REQUEST_TIMEOUT',
+          uncertain: true,
+          message: '伺服器處理時間較久，正在重新確認結果。'
+        });
+      }, timeoutMs);
 
       script.src = API_URL + '?' + query;
       document.body.appendChild(script);
     });
+  }
+
+  function waitV82(ms) {
+    return new Promise(function (resolve) {
+      setTimeout(resolve, ms);
+    });
+  }
+
+  async function verifyPendingResultV82(rowIndex) {
+    // 讓前一筆 Apps Script 寫入有時間完成，再重新讀取待審核清單。
+    await waitV82(1800);
+
+    const check = await batchApiCallV82({
+      action: 'getPendingMakeupRequests',
+      userId: lineUserId
+    }, 60000);
+
+    if (!check || !check.ok) {
+      return {
+        verified: false,
+        message: String((check && check.message) || '無法重新確認待審核狀態。')
+      };
+    }
+
+    const requests = Array.isArray(check.requests) ? check.requests : [];
+    const stillPending = requests.some(function (item) {
+      return String(item && item.rowIndex || '').trim() === String(rowIndex || '').trim();
+    });
+
+    return {
+      verified: true,
+      stillPending: stillPending
+    };
+  }
+
+  async function approveOnePendingV82(rowIndex, card, progressText) {
+    setPendingReviewItemResultV81(card, progressText || '正在送出通過處理...');
+
+    let result = await batchApiCallV82({
+      action: 'approvePendingMakeupRequest',
+      userId: lineUserId,
+      rowIndex: rowIndex
+    }, 75000);
+
+    if (result && result.ok) {
+      return result;
+    }
+
+    const shouldVerify = !!(
+      result && (
+        result.uncertain ||
+        result.code === 'REQUEST_TIMEOUT' ||
+        result.code === 'NETWORK_ERROR'
+      )
+    );
+
+    if (!shouldVerify) {
+      return result || { ok: false, message: '補卡通過失敗。' };
+    }
+
+    setPendingReviewItemResultV81(
+      card,
+      '伺服器回應較慢，正在重新確認這筆是否已完成...\n請勿重複點擊。'
+    );
+
+    const verification = await verifyPendingResultV82(rowIndex);
+
+    if (verification.verified && !verification.stillPending) {
+      return {
+        ok: true,
+        verifiedAfterTimeout: true,
+        message: '伺服器回應較慢，但重新確認後此筆已完成通過。'
+      };
+    }
+
+    if (verification.verified && verification.stillPending) {
+      return {
+        ok: false,
+        message: '重新確認後，此筆仍在待審核清單中，尚未完成通過。請稍後再試。'
+      };
+    }
+
+    return {
+      ok: false,
+      uncertain: true,
+      message: '目前無法確認最終結果。請先按「重新整理」確認，避免重複送出。\n' + verification.message
+    };
   }
 
   window.renderPendingReviewListV55 = function (requests, res) {
@@ -7132,7 +7250,7 @@ setTimeout(function () {
     let html =
       '<div class="success-card">' +
         '<div class="success-title">員工忘記打卡 待審核</div>' +
-        '<div class="form-note">可勾選多筆後一次通過。系統會依序處理；成功項目會取消勾選，失敗項目會保留勾選並顯示原因。</div>' +
+        '<div class="form-note">可勾選多筆後一次通過。若伺服器回應較慢，前端會自動重新確認，不會只因連線逾時就誤判失敗。</div>' +
         '<button class="btn-outline" onclick="showMakeupPage()">返回補卡申請</button>' +
         '<button class="btn-outline" onclick="showPendingReviewPageV55()">重新整理</button>';
 
@@ -7216,6 +7334,7 @@ setTimeout(function () {
 
     let successCount = 0;
     let failedCount = 0;
+    let uncertainCount = 0;
 
     for (let i = 0; i < selected.length; i++) {
       const checkbox = selected[i];
@@ -7227,13 +7346,11 @@ setTimeout(function () {
         card.classList.add('is-processing-v81');
       }
 
-      setPendingReviewItemResultV81(card, '正在處理第 ' + (i + 1) + '／' + selected.length + ' 筆...');
-
-      const result = await batchApiCallV81({
-        action: 'approvePendingMakeupRequest',
-        userId: lineUserId,
-        rowIndex: rowIndex
-      });
+      const result = await approveOnePendingV82(
+        rowIndex,
+        card,
+        '正在處理第 ' + (i + 1) + '／' + selected.length + ' 筆...\n請保持畫面開啟。'
+      );
 
       if (result && result.ok) {
         successCount++;
@@ -7254,6 +7371,10 @@ setTimeout(function () {
         failedCount++;
         checkbox.checked = true;
 
+        if (result && result.uncertain) {
+          uncertainCount++;
+        }
+
         if (card) {
           card.classList.remove('is-processing-v81', 'is-success-v81');
           card.classList.add('is-failed-v81');
@@ -7261,7 +7382,8 @@ setTimeout(function () {
 
         setPendingReviewItemResultV81(
           card,
-          '✕ 通過失敗\n原因：' + String((result && result.message) || '未知錯誤')
+          (result && result.uncertain ? '⚠ 尚未確認結果' : '✕ 通過失敗') +
+          '\n原因：' + String((result && result.message) || '未知錯誤')
         );
       }
     }
@@ -7283,8 +7405,79 @@ setTimeout(function () {
       summaryBox.textContent =
         '批次審核完成\n' +
         '成功：' + successCount + ' 筆\n' +
-        '失敗：' + failedCount + ' 筆' +
-        (failedCount > 0 ? '\n\n失敗項目已保留勾選，請查看各筆原因。' : '');
+        '未完成／待確認：' + failedCount + ' 筆' +
+        (uncertainCount > 0
+          ? '\n\n有 ' + uncertainCount + ' 筆無法即時確認，請先按「重新整理」查看，不要直接重複送出。'
+          : (failedCount > 0 ? '\n\n未完成項目已保留勾選，請查看各筆原因。' : ''));
+    }
+
+    window.updatePendingBatchSelectionV81();
+  };
+
+  window.approvePendingMakeupV55 = async function (rowIndex) {
+    rowIndex = String(rowIndex || '').trim();
+
+    if (!rowIndex) {
+      setStatus('找不到要通過的補卡資料。');
+      return;
+    }
+
+    if (!confirm('確定通過這筆補卡嗎？\n通過後會正式寫入打卡紀錄。')) {
+      return;
+    }
+
+    const cards = Array.prototype.slice.call(document.querySelectorAll('.batch-review-card-v81'));
+    const card = cards.find(function (item) {
+      return String(item.getAttribute('data-row-index') || '').trim() === rowIndex;
+    }) || null;
+    const checkbox = card ? card.querySelector('.batch-review-checkbox-v81') : null;
+    const singleButton = card ? card.querySelector('.single-review-button-v81') : null;
+
+    setButtons(false);
+    if (checkbox) checkbox.disabled = true;
+
+    if (card) {
+      card.classList.remove('is-success-v81', 'is-failed-v81');
+      card.classList.add('is-processing-v81');
+    }
+
+    const result = await approveOnePendingV82(rowIndex, card, '正在通過這筆補卡...\n請保持畫面開啟。');
+
+    setButtons(true);
+
+    if (result && result.ok) {
+      if (checkbox) {
+        checkbox.checked = false;
+        checkbox.disabled = true;
+      }
+
+      if (card) {
+        card.classList.remove('is-processing-v81', 'is-failed-v81');
+        card.classList.add('is-success-v81');
+      }
+
+      if (singleButton) {
+        singleButton.disabled = true;
+        singleButton.textContent = '已通過';
+      }
+
+      setPendingReviewItemResultV81(card, '✓ 已通過' + (result.message ? '\n' + result.message : ''));
+    } else {
+      if (checkbox) {
+        checkbox.checked = true;
+        checkbox.disabled = false;
+      }
+
+      if (card) {
+        card.classList.remove('is-processing-v81', 'is-success-v81');
+        card.classList.add('is-failed-v81');
+      }
+
+      setPendingReviewItemResultV81(
+        card,
+        (result && result.uncertain ? '⚠ 尚未確認結果' : '✕ 通過失敗') +
+        '\n原因：' + String((result && result.message) || '未知錯誤')
+      );
     }
 
     window.updatePendingBatchSelectionV81();
@@ -7294,7 +7487,7 @@ setTimeout(function () {
     try {
       const footer = document.querySelector('.footer');
       if (footer) {
-        footer.innerText = 'LIFF ID：2010226307-AZeYYFbb｜前端 V81 補卡批次審核';
+        footer.innerText = 'LIFF ID：2010226307-AZeYYFbb｜前端 V82 補卡批次審核逾時核對版';
       }
     } catch (err) {}
   }, 900);
