@@ -6894,5 +6894,412 @@ setTimeout(function () {
 })();
 </script>
 
+
+
+<!-- =====================================================
+     前端 V81：補卡待審核支援多筆勾選、全選、一次通過
+     - 沿用既有 approvePendingMakeupRequest API，依序處理避免寫入衝突
+     - 成功：取消勾選並鎖定該筆
+     - 失敗：保留勾選並在該筆下方顯示原因
+====================================================== -->
+<style id="pending-review-batch-style-v81">
+  .batch-review-toolbar-v81 {
+    margin: 14px 0;
+    padding: 14px;
+    border: 1px solid rgba(37, 75, 47, 0.14);
+    border-radius: 16px;
+    background: #f5f8f3;
+    text-align: left;
+  }
+
+  .batch-review-select-all-v81,
+  .batch-review-checkline-v81 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #243529;
+    font-size: 14px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  .batch-review-select-all-v81 input,
+  .batch-review-checkline-v81 input {
+    width: 22px !important;
+    min-width: 22px !important;
+    height: 22px;
+    margin: 0 !important;
+    padding: 0 !important;
+    accent-color: #254b2f;
+    cursor: pointer;
+    -webkit-appearance: auto !important;
+    appearance: auto !important;
+  }
+
+  .batch-review-selection-v81 {
+    margin: 10px 0 4px;
+    color: #6f7d72;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .batch-review-card-v81 {
+    position: relative;
+    transition: border-color .2s ease, background .2s ease, opacity .2s ease;
+  }
+
+  .batch-review-card-v81.is-processing-v81 {
+    border-color: #d5a227 !important;
+    background: #fffaf0 !important;
+  }
+
+  .batch-review-card-v81.is-success-v81 {
+    border-color: #8bc99a !important;
+    background: #effaf1 !important;
+  }
+
+  .batch-review-card-v81.is-failed-v81 {
+    border-color: #e3a1a6 !important;
+    background: #fff3f4 !important;
+  }
+
+  .batch-review-checkline-v81 {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed rgba(37, 75, 47, 0.16);
+  }
+
+  .batch-review-item-result-v81 {
+    display: none;
+    margin: 10px 0 4px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1.6;
+    white-space: pre-line;
+  }
+
+  .batch-review-card-v81.is-processing-v81 .batch-review-item-result-v81,
+  .batch-review-card-v81.is-success-v81 .batch-review-item-result-v81,
+  .batch-review-card-v81.is-failed-v81 .batch-review-item-result-v81 {
+    display: block;
+  }
+
+  .batch-review-card-v81.is-processing-v81 .batch-review-item-result-v81 {
+    color: #72511d;
+    background: #fff3ce;
+  }
+
+  .batch-review-card-v81.is-success-v81 .batch-review-item-result-v81 {
+    color: #176b2d;
+    background: #dff3e3;
+  }
+
+  .batch-review-card-v81.is-failed-v81 .batch-review-item-result-v81 {
+    color: #a1262f;
+    background: #ffe0e3;
+  }
+
+  .batch-review-summary-v81 {
+    margin: 12px 0;
+    padding: 13px;
+    border-radius: 14px;
+    color: #243529;
+    background: #eef4ec;
+    font-size: 14px;
+    font-weight: 900;
+    line-height: 1.7;
+    text-align: left;
+    white-space: pre-line;
+  }
+</style>
+
+<script id="pending-review-batch-v81">
+(function () {
+  'use strict';
+
+  function getPendingReviewCheckboxesV81(includeDisabled) {
+    const selector = includeDisabled
+      ? '.batch-review-checkbox-v81'
+      : '.batch-review-checkbox-v81:not(:disabled)';
+
+    return Array.prototype.slice.call(document.querySelectorAll(selector));
+  }
+
+  function findPendingReviewCardV81(checkbox) {
+    return checkbox && checkbox.closest
+      ? checkbox.closest('.batch-review-card-v81')
+      : null;
+  }
+
+  function setPendingReviewItemResultV81(card, text) {
+    if (!card) return;
+    const resultBox = card.querySelector('.batch-review-item-result-v81');
+    if (resultBox) resultBox.textContent = String(text || '');
+  }
+
+  window.updatePendingBatchSelectionV81 = function () {
+    const available = getPendingReviewCheckboxesV81(false);
+    const selected = available.filter(function (box) { return box.checked; });
+    const selectAll = document.getElementById('batchReviewSelectAllV81');
+    const countBox = document.getElementById('batchReviewSelectedCountV81');
+    const approveButton = document.getElementById('batchApproveButtonV81');
+
+    if (selectAll) {
+      selectAll.checked = available.length > 0 && selected.length === available.length;
+      selectAll.indeterminate = selected.length > 0 && selected.length < available.length;
+      selectAll.disabled = available.length === 0;
+    }
+
+    if (countBox) {
+      countBox.textContent = '已勾選 ' + selected.length + ' 筆，共 ' + available.length + ' 筆可處理';
+    }
+
+    if (approveButton) {
+      approveButton.disabled = selected.length === 0;
+      approveButton.textContent = selected.length > 0
+        ? '一次通過已勾選項目（' + selected.length + '）'
+        : '一次通過已勾選項目';
+    }
+  };
+
+  window.toggleAllPendingReviewV81 = function (source) {
+    const checked = !!(source && source.checked);
+
+    getPendingReviewCheckboxesV81(false).forEach(function (box) {
+      box.checked = checked;
+    });
+
+    window.updatePendingBatchSelectionV81();
+  };
+
+  function batchApiCallV81(params) {
+    return new Promise(function (resolve) {
+      const cbName = 'jsonpBatchReviewV81_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
+      const payload = Object.assign({}, params || {});
+      payload.callback = cbName;
+      payload._t = Date.now();
+
+      const query = Object.keys(payload).map(function (key) {
+        return encodeURIComponent(key) + '=' + encodeURIComponent(payload[key]);
+      }).join('&');
+
+      const script = document.createElement('script');
+      let finished = false;
+      let timer = null;
+
+      function finish(result) {
+        if (finished) return;
+        finished = true;
+
+        if (timer) clearTimeout(timer);
+
+        try {
+          delete window[cbName];
+        } catch (err) {
+          window[cbName] = undefined;
+        }
+
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+
+        resolve(result || { ok: false, message: '伺服器沒有回傳結果。' });
+      }
+
+      window[cbName] = function (res) {
+        finish(res);
+      };
+
+      script.onerror = function () {
+        finish({ ok: false, message: '無法連接 Google Apps Script API。' });
+      };
+
+      timer = setTimeout(function () {
+        finish({ ok: false, message: '連線逾時，請稍後重新勾選再試。' });
+      }, 20000);
+
+      script.src = API_URL + '?' + query;
+      document.body.appendChild(script);
+    });
+  }
+
+  window.renderPendingReviewListV55 = function (requests, res) {
+    const statusBox = document.getElementById('status');
+    requests = Array.isArray(requests) ? requests : [];
+
+    let html =
+      '<div class="success-card">' +
+        '<div class="success-title">員工忘記打卡 待審核</div>' +
+        '<div class="form-note">可勾選多筆後一次通過。系統會依序處理；成功項目會取消勾選，失敗項目會保留勾選並顯示原因。</div>' +
+        '<button class="btn-outline" onclick="showMakeupPage()">返回補卡申請</button>' +
+        '<button class="btn-outline" onclick="showPendingReviewPageV55()">重新整理</button>';
+
+    if (requests.length === 0) {
+      html +=
+        '<div class="success-note">目前沒有待審核補卡。</div>' +
+        '<button class="btn-secondary" onclick="closeLiffNow()">關閉畫面</button>' +
+      '</div>';
+
+      statusBox.innerHTML = html;
+      return;
+    }
+
+    html +=
+      '<div class="batch-review-toolbar-v81">' +
+        '<label class="batch-review-select-all-v81">' +
+          '<input id="batchReviewSelectAllV81" type="checkbox" onchange="toggleAllPendingReviewV81(this)">' +
+          '<span>全選待審核項目</span>' +
+        '</label>' +
+        '<div id="batchReviewSelectedCountV81" class="batch-review-selection-v81">已勾選 0 筆，共 ' + requests.length + ' 筆可處理</div>' +
+        '<button id="batchApproveButtonV81" class="btn-main" onclick="approveSelectedPendingMakeupV81()" disabled>一次通過已勾選項目</button>' +
+      '</div>' +
+      '<div id="batchReviewSummaryV81"></div>';
+
+    requests.forEach(function (item, index) {
+      const rowIndex = String(item.rowIndex || '').trim();
+      if (!rowIndex) return;
+
+      const title = (index + 1) + '. ' + (item.name || '-') + '｜' + (item.type || '-') + ' ' + formatTime(item.time || '');
+      const safeRowIndex = escapeHtml(rowIndex);
+
+      html +=
+        '<div class="success-list batch-review-card-v81" data-row-index="' + safeRowIndex + '" style="text-align:left;">' +
+          '<label class="batch-review-checkline-v81">' +
+            '<input class="batch-review-checkbox-v81" type="checkbox" value="' + safeRowIndex + '" onchange="updatePendingBatchSelectionV81()">' +
+            '<span>勾選此筆補卡</span>' +
+          '</label>' +
+          '<div class="mini-title">' + escapeHtml(title) + '</div>' +
+          makeSuccessRowHtml('申請時間', item.requestTime || '-') +
+          makeSuccessRowHtml('員工', item.name || '-') +
+          makeSuccessRowHtml('分店', item.store || '-') +
+          makeSuccessRowHtml('日期', item.date || '-') +
+          makeSuccessRowHtml('類型', item.type || '-') +
+          makeSuccessRowHtml('時間', formatTime(item.time || '')) +
+          makeSuccessRowHtml('原因', item.reason || '-') +
+          makeSuccessRowHtml('狀態', item.status || '-') +
+          '<div class="batch-review-item-result-v81" aria-live="polite"></div>' +
+          '<button class="btn-main single-review-button-v81" data-row-index="' + safeRowIndex + '" onclick="approvePendingMakeupV55(this.getAttribute(\'data-row-index\'))">單筆通過</button>' +
+        '</div>';
+    });
+
+    html +=
+        '<button class="btn-secondary" onclick="closeLiffNow()">關閉畫面</button>' +
+      '</div>';
+
+    statusBox.innerHTML = html;
+    window.updatePendingBatchSelectionV81();
+  };
+
+  window.approveSelectedPendingMakeupV81 = async function () {
+    const selected = getPendingReviewCheckboxesV81(false).filter(function (box) {
+      return box.checked;
+    });
+
+    if (selected.length === 0) {
+      alert('請先勾選需要通過的補卡資料。');
+      return;
+    }
+
+    if (!confirm('確定一次通過已勾選的 ' + selected.length + ' 筆補卡嗎？\n通過後會正式寫入打卡紀錄與每日彙整。')) {
+      return;
+    }
+
+    const allCheckboxes = getPendingReviewCheckboxesV81(true);
+    const selectAll = document.getElementById('batchReviewSelectAllV81');
+    const summaryBox = document.getElementById('batchReviewSummaryV81');
+
+    setButtons(false);
+    allCheckboxes.forEach(function (box) { box.disabled = true; });
+    if (selectAll) selectAll.disabled = true;
+
+    let successCount = 0;
+    let failedCount = 0;
+
+    for (let i = 0; i < selected.length; i++) {
+      const checkbox = selected[i];
+      const rowIndex = String(checkbox.value || '').trim();
+      const card = findPendingReviewCardV81(checkbox);
+
+      if (card) {
+        card.classList.remove('is-success-v81', 'is-failed-v81');
+        card.classList.add('is-processing-v81');
+      }
+
+      setPendingReviewItemResultV81(card, '正在處理第 ' + (i + 1) + '／' + selected.length + ' 筆...');
+
+      const result = await batchApiCallV81({
+        action: 'approvePendingMakeupRequest',
+        userId: lineUserId,
+        rowIndex: rowIndex
+      });
+
+      if (result && result.ok) {
+        successCount++;
+        checkbox.checked = false;
+
+        if (card) {
+          card.classList.remove('is-processing-v81', 'is-failed-v81');
+          card.classList.add('is-success-v81');
+          const singleButton = card.querySelector('.single-review-button-v81');
+          if (singleButton) {
+            singleButton.disabled = true;
+            singleButton.textContent = '已通過';
+          }
+        }
+
+        setPendingReviewItemResultV81(card, '✓ 已通過' + (result.message ? '\n' + result.message : ''));
+      } else {
+        failedCount++;
+        checkbox.checked = true;
+
+        if (card) {
+          card.classList.remove('is-processing-v81', 'is-success-v81');
+          card.classList.add('is-failed-v81');
+        }
+
+        setPendingReviewItemResultV81(
+          card,
+          '✕ 通過失敗\n原因：' + String((result && result.message) || '未知錯誤')
+        );
+      }
+    }
+
+    setButtons(true);
+
+    allCheckboxes.forEach(function (box) {
+      const card = findPendingReviewCardV81(box);
+      const succeeded = card && card.classList.contains('is-success-v81');
+      box.disabled = !!succeeded;
+    });
+
+    document.querySelectorAll('.batch-review-card-v81.is-success-v81 .single-review-button-v81').forEach(function (button) {
+      button.disabled = true;
+    });
+
+    if (summaryBox) {
+      summaryBox.className = 'batch-review-summary-v81';
+      summaryBox.textContent =
+        '批次審核完成\n' +
+        '成功：' + successCount + ' 筆\n' +
+        '失敗：' + failedCount + ' 筆' +
+        (failedCount > 0 ? '\n\n失敗項目已保留勾選，請查看各筆原因。' : '');
+    }
+
+    window.updatePendingBatchSelectionV81();
+  };
+
+  setTimeout(function () {
+    try {
+      const footer = document.querySelector('.footer');
+      if (footer) {
+        footer.innerText = 'LIFF ID：2010226307-AZeYYFbb｜前端 V81 補卡批次審核';
+      }
+    } catch (err) {}
+  }, 900);
+})();
+</script>
+
 </body>
 </html>
