@@ -729,7 +729,7 @@ textarea {
           </div>
           <div>
             <div class="brand-kicker">STAFF ATTENDANCE</div>
-            <div class="brand">小時候打卡</div>
+            <div class="brand">小時候線上打卡</div>
           </div>
         </div>
         <div class="connection-chip"><span></span>LINE</div>
@@ -7491,6 +7491,422 @@ setTimeout(function () {
       }
     } catch (err) {}
   }, 900);
+})();
+</script>
+
+<style id="attendance-app-v90">
+  :root {
+    --app-bg: #f4f5f1;
+    --app-surface: #ffffff;
+    --app-ink: #18201b;
+    --app-muted: #68716a;
+    --app-line: #e3e7e1;
+    --app-brand: #1f4d3b;
+    --app-brand-pressed: #173a2d;
+    --app-green-bg: #eaf3ed;
+    --app-green: #2f6b48;
+    --app-orange-bg: #fbf0dc;
+    --app-orange: #9a6516;
+    --app-blue-bg: #e7eff5;
+    --app-blue: #35627e;
+    --app-red-bg: #faeaea;
+    --app-red: #a13d3d;
+    --app-radius: 16px;
+    --app-radius-small: 10px;
+    --app-nav-height: 72px;
+  }
+
+  * { box-sizing: border-box; }
+  html { background: var(--app-bg); overflow-x: hidden; }
+  body {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    overflow-x: hidden;
+    background: var(--app-bg) !important;
+    color: var(--app-ink);
+    font-family: "Geist", "SF Pro Display", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif !important;
+  }
+  button, input, select, textarea { font: inherit; }
+  .ambient, .footer, .workspace-heading, .location-note { display: none !important; }
+  .wrap.app-shell {
+    width: 100% !important;
+    max-width: 480px !important;
+    min-height: 100dvh;
+    margin: 0 auto !important;
+    padding: 0 16px calc(var(--app-nav-height) + 32px + env(safe-area-inset-bottom)) !important;
+  }
+  .app-header { padding: calc(14px + env(safe-area-inset-top)) 0 12px !important; }
+  .brand-row { display: none !important; }
+  .header-dashboard { display: flex !important; gap: 10px !important; }
+  .today-card, .profile-card {
+    min-width: 0;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  .today-card { order: 2; margin-left: auto; text-align: right; }
+  .today-card strong { display: none !important; }
+  .today-card span { color: var(--app-muted) !important; font-size: 13px !important; font-weight: 600 !important; }
+  .profile-card { order: 1; flex: 1; display: flex !important; align-items: center; gap: 10px; }
+  .profile-avatar {
+    width: 42px !important;
+    height: 42px !important;
+    flex: 0 0 42px;
+    border-radius: 12px !important;
+    background: #dfe9e2 !important;
+    color: var(--app-brand) !important;
+    font-weight: 750 !important;
+  }
+  .profile-copy span { color: var(--app-muted) !important; font-size: 13px !important; }
+  .profile-copy strong { color: var(--app-ink) !important; font-size: 17px !important; font-weight: 750 !important; }
+  .workspace-card { padding: 0 !important; border: 0 !important; background: transparent !important; box-shadow: none !important; }
+  .system-panel { margin: 0 !important; padding: 0 !important; border: 0 !important; background: transparent !important; }
+  .panel-caption { display: none !important; }
+  #status.status { min-height: 0; padding: 0 !important; color: var(--app-ink); background: transparent !important; white-space: normal !important; }
+  #bindBox, #homeBox { margin-top: 12px; }
+  .app-card, .success-card, .bind-panel {
+    margin: 0 0 14px !important;
+    padding: 18px !important;
+    border: 1px solid var(--app-line) !important;
+    border-radius: var(--app-radius) !important;
+    background: var(--app-surface) !important;
+    box-shadow: 0 2px 10px rgba(28, 48, 36, .035) !important;
+  }
+  .app-eyebrow { margin-bottom: 5px; color: var(--app-muted); font-size: 13px; font-weight: 650; }
+  .app-title { margin: 0; color: var(--app-ink); font-size: 20px; font-weight: 760; letter-spacing: -.02em; line-height: 1.3; }
+  .employee-meta { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+  .meta-chip, .status-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .meta-chip { color: #536057; background: #f0f2ef; }
+  .status-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .status-dot { width: 9px; height: 9px; margin-right: 7px; border-radius: 50%; background: currentColor; }
+  .state-before { color: #58625b; background: #eef0ee; }
+  .state-working { color: var(--app-green); background: var(--app-green-bg); }
+  .state-break { color: var(--app-orange); background: var(--app-orange-bg); }
+  .state-done { color: var(--app-blue); background: var(--app-blue-bg); }
+  .state-error { color: var(--app-red); background: var(--app-red-bg); }
+  .metric-main { margin-top: 18px; }
+  .metric-main span { display: block; color: var(--app-muted); font-size: 13px; font-weight: 600; }
+  .metric-main strong {
+    display: block;
+    margin-top: 2px;
+    color: var(--app-ink);
+    font-family: "Geist Mono", "SF Mono", monospace;
+    font-size: clamp(30px, 9vw, 36px);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.045em;
+  }
+  .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+  .metric-item { padding: 11px 12px; border-radius: var(--app-radius-small); background: #f6f7f4; }
+  .metric-item span { display: block; color: var(--app-muted); font-size: 13px; }
+  .metric-item strong { display: block; margin-top: 3px; font-size: 15px; font-variant-numeric: tabular-nums; }
+  .primary-action, .secondary-action, .nav-item, .app-inline-button {
+    appearance: none;
+    border: 0;
+    cursor: pointer;
+    transition: transform .16s ease, background-color .16s ease, opacity .16s ease;
+  }
+  .primary-action {
+    width: 100%; min-height: 64px; padding: 14px 18px; border-radius: 12px;
+    color: #fff; background: var(--app-brand); font-size: 19px; font-weight: 760;
+  }
+  .primary-action.is-break { color: #47320e; background: #e9bd67; }
+  .primary-action:active, .secondary-action:active, .app-inline-button:active { transform: scale(.98); }
+  .primary-action:disabled, .secondary-action:disabled { cursor: wait; opacity: .56; }
+  .secondary-action {
+    width: 100%; min-height: 48px; margin-top: 8px; padding: 10px 16px;
+    border: 1px solid #d8ddd9; border-radius: 10px; color: #344039; background: #fff; font-size: 15px; font-weight: 700;
+  }
+  .section-label { margin: 20px 2px 10px; color: #4f5a52; font-size: 14px; font-weight: 750; }
+  .timeline { position: relative; margin: 0; padding: 2px 0 2px 7px; list-style: none; }
+  .timeline::before { content: ""; position: absolute; top: 12px; bottom: 12px; left: 12px; width: 1px; background: var(--app-line); }
+  .timeline-item { position: relative; display: grid; grid-template-columns: 20px 62px minmax(0, 1fr); gap: 8px; align-items: start; min-height: 48px; }
+  .timeline-marker { z-index: 1; width: 11px; height: 11px; margin-top: 4px; border: 3px solid #fff; border-radius: 50%; outline: 1px solid #b8c2bb; background: var(--app-brand); }
+  .timeline-time { color: var(--app-muted); font-family: "Geist Mono", monospace; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .timeline-copy strong { display: block; font-size: 14px; }
+  .timeline-copy small { display: block; margin-top: 2px; color: var(--app-muted); font-size: 13px; line-height: 1.45; }
+  .notice-card { display: flex; gap: 10px; padding: 13px 14px; border: 1px solid #ecd2d2; border-radius: 12px; color: #7c3434; background: #fff8f7; font-size: 14px; line-height: 1.55; }
+  .notice-card svg { width: 20px; height: 20px; flex: 0 0 20px; }
+  .empty-state, .loading-state, .error-state { padding: 28px 18px; text-align: center; }
+  .state-icon { display: grid; width: 44px; height: 44px; margin: 0 auto 12px; place-items: center; border-radius: 12px; color: var(--app-brand); background: var(--app-green-bg); }
+  .state-icon svg { width: 24px; height: 24px; }
+  .empty-state strong, .loading-state strong, .error-state strong { display: block; font-size: 17px; }
+  .empty-state p, .loading-state p, .error-state p { margin: 7px auto 0; max-width: 30em; color: var(--app-muted); font-size: 14px; line-height: 1.6; }
+  .skeleton { overflow: hidden; position: relative; height: 14px; margin: 10px 0; border-radius: 5px; background: #e9ece8; }
+  .skeleton::after { content: ""; position: absolute; inset: 0; background: rgba(255,255,255,.6); transform: translateX(-100%); animation: appSkeleton 1.2s infinite; }
+  @keyframes appSkeleton { to { transform: translateX(100%); } }
+  .app-bottom-nav {
+    position: fixed; z-index: 30; right: 0; bottom: 0; left: 0;
+    padding: 8px max(12px, calc((100vw - 480px) / 2 + 12px)) calc(8px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--app-line); background: rgba(255,255,255,.97);
+  }
+  .app-bottom-nav-inner { display: grid; grid-template-columns: repeat(4, 1fr); max-width: 456px; margin: 0 auto; }
+  .nav-item { display: flex; min-width: 0; min-height: 54px; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #778078; background: transparent; font-size: 12px; font-weight: 650; }
+  .nav-item svg { width: 22px; height: 22px; }
+  .nav-item.active { color: var(--app-brand); font-weight: 760; }
+  .app-modal-backdrop { position: fixed; z-index: 50; inset: 0; display: grid; padding: 20px; place-items: center; background: rgba(18,28,22,.42); animation: appFade .18s ease both; }
+  .app-modal { width: min(100%, 380px); padding: 22px; border-radius: var(--app-radius); background: #fff; box-shadow: 0 18px 48px rgba(24,38,29,.16); }
+  .app-modal h2 { margin: 0; font-size: 20px; letter-spacing: -.02em; }
+  .app-modal p { margin: 9px 0 20px; color: var(--app-muted); font-size: 14px; line-height: 1.65; white-space: pre-line; }
+  .app-modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .app-modal-actions button { min-height: 48px; border: 0; border-radius: 10px; font-weight: 750; }
+  .app-modal-cancel { color: #3f4942; background: #eef0ed; }
+  .app-modal-confirm { color: #fff; background: var(--app-brand); }
+  .app-page { animation: appFade .22s ease both; }
+  @keyframes appFade { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+  .records-tabs { display: grid !important; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: #e9ece8; }
+  .records-tabs button { min-height: 44px; border: 0 !important; border-radius: 9px !important; font-weight: 700 !important; }
+  .record-active { color: var(--app-brand) !important; background: #fff !important; }
+  .record-inactive { color: var(--app-muted) !important; background: transparent !important; }
+  .record-day { margin-top: 10px; border: 1px solid var(--app-line); border-radius: 12px; background: #fff; }
+  .record-day summary { display: grid; grid-template-columns: 54px 1fr auto; gap: 10px; align-items: center; min-height: 62px; padding: 10px 14px; cursor: pointer; list-style: none; }
+  .record-day summary::-webkit-details-marker { display: none; }
+  .record-date strong, .record-date small { display: block; }
+  .record-date strong { font-size: 16px; }
+  .record-date small { color: var(--app-muted); font-size: 12px; }
+  .record-summary { min-width: 0; }
+  .record-summary strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+  .record-summary small { color: var(--app-muted); font-size: 13px; }
+  .record-detail { padding: 0 14px 14px; border-top: 1px solid var(--app-line); }
+  .month-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+  .month-stat { padding: 12px; border: 1px solid var(--app-line); border-radius: 10px; background: #fff; }
+  .month-stat span { display: block; color: var(--app-muted); font-size: 12px; }
+  .month-stat strong { display: block; margin-top: 3px; font-size: 18px; font-variant-numeric: tabular-nums; }
+  .success-list, .batch-review-toolbar-v81 { border-color: var(--app-line) !important; border-radius: 12px !important; background: #fff !important; }
+  input, select, textarea { min-height: 48px !important; border: 1px solid #d8ddd9 !important; border-radius: 10px !important; color: var(--app-ink) !important; background: #fff !important; }
+  textarea { min-height: 108px !important; }
+  .btn-main, .btn-bind { min-height: 56px !important; border-radius: 10px !important; color: #fff !important; background: var(--app-brand) !important; box-shadow: none !important; }
+  .btn-outline, .btn-secondary, .btn-danger { min-height: 48px !important; border-radius: 10px !important; box-shadow: none !important; }
+  :focus-visible { outline: 3px solid rgba(31,77,59,.25) !important; outline-offset: 2px; }
+  @media (max-width: 370px) {
+    .wrap.app-shell { padding-right: 14px !important; padding-left: 14px !important; }
+    .app-card, .success-card, .bind-panel { padding: 16px !important; }
+    .metric-grid, .month-stats { gap: 7px; }
+    .timeline-item { grid-template-columns: 20px 56px minmax(0, 1fr); gap: 6px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  }
+</style>
+
+<script id="attendance-app-controller-v90">
+(function () {
+  'use strict';
+
+  var appStateV90 = { employee: null, records: [], busy: false, timer: null, activePage: 'home' };
+  var originalHandleRouteV90 = window.handleRoute;
+  var originalSendClockV90 = window.sendClock;
+  var originalShowMakeupPageV90 = window.showMakeupPage;
+  var originalShowPendingReviewPageV90 = window.showPendingReviewPageV55;
+
+  function iconV90(name) {
+    var icons = {
+      home: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20H5V10" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 20v-6h6v6" stroke="currentColor" stroke-width="2"/></svg>',
+      records: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3" stroke="currentColor" stroke-width="2"/><path d="M8 3v4m8-4v4M4 10h16m-12 4h3m-3 3h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+      edit: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 19h3l10-10a2.1 2.1 0 0 0-3-3L5 16v3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" stroke="currentColor" stroke-width="2"/></svg>',
+      user: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M5 21a7 7 0 0 1 14 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+      review: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 4h10v16H7z" stroke="currentColor" stroke-width="2"/><path d="M9 9h6m-6 4h6m-6 4h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+      alert: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4 3.5 20h17L12 4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9v5m0 3v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+      check: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    };
+    return icons[name] || icons.home;
+  }
+
+  function fieldV90(object, keys) {
+    if (!object) return '';
+    for (var i = 0; i < keys.length; i++) {
+      if (object[keys[i]] !== undefined && object[keys[i]] !== null && String(object[keys[i]]).trim() !== '') return object[keys[i]];
+    }
+    return '';
+  }
+
+  function safeV90(value) { return typeof escapeHtml === 'function' ? escapeHtml(String(value == null ? '' : value)) : String(value == null ? '' : value); }
+  function timeV90(value) { return typeof formatTime === 'function' ? formatTime(value) : String(value || '-'); }
+  function todayV90() { return typeof getTodaySheetDate === 'function' ? getTodaySheetDate() : new Date().toISOString().slice(0, 10); }
+  function normalizeDateV90(value) { return String(value || '').replace(/[./]/g, '-').slice(0, 10); }
+  function isSupervisorV90(employee) {
+    if (!employee) return false;
+    if (typeof window.isReviewerEmployeeV55 === 'function') return !!window.isReviewerEmployeeV55(employee);
+    var role = String(fieldV90(employee, ['position', 'role', '職級', '職位']) || '');
+    return /主管|開發者|店長|經理/.test(role) || /^(true|1|yes)$/i.test(String(employee.isSupervisor || ''));
+  }
+
+  function ensureChromeV90() {
+    if (!document.getElementById('appBottomNavV90')) {
+      var nav = document.createElement('nav');
+      nav.id = 'appBottomNavV90';
+      nav.className = 'app-bottom-nav';
+      nav.setAttribute('aria-label', '主要導覽');
+      document.body.appendChild(nav);
+    }
+    if (!document.getElementById('appModalRootV90')) {
+      var modal = document.createElement('div');
+      modal.id = 'appModalRootV90';
+      document.body.appendChild(modal);
+    }
+    renderNavV90();
+  }
+
+  function renderNavV90() {
+    var nav = document.getElementById('appBottomNavV90');
+    if (!nav) return;
+    var supervisor = isSupervisorV90(appStateV90.employee);
+    var items = supervisor
+      ? [['home','首頁','showAttendanceHomeV90()'],['review','審核','showPendingReviewPageV55()'],['user','員工','showNewEmployeePageV57()'],['edit','更多','showMakeupPage()']]
+      : [['home','首頁','showAttendanceHomeV90()'],['records','出勤紀錄','showRecordsHub(\'month\')'],['edit','補卡','showMakeupPage()'],['user','我的','showAttendanceProfileV90()']];
+    nav.innerHTML = '<div class="app-bottom-nav-inner">' + items.map(function (item) {
+      return '<button type="button" class="nav-item ' + (appStateV90.activePage === item[0] ? 'active' : '') + '" onclick="' + item[2] + '">' + iconV90(item[0]) + '<span>' + item[1] + '</span></button>';
+    }).join('') + '</div>';
+  }
+
+  window.showAppConfirmV90 = function (title, message, confirmText, onConfirm) {
+    var root = document.getElementById('appModalRootV90');
+    if (!root) return;
+    window.appConfirmActionV90 = onConfirm;
+    root.innerHTML = '<div class="app-modal-backdrop" role="presentation" onclick="if(event.target===this)closeAppConfirmV90()"><section class="app-modal" role="alertdialog" aria-modal="true" aria-labelledby="appModalTitleV90"><h2 id="appModalTitleV90">' + safeV90(title) + '</h2><p>' + safeV90(message) + '</p><div class="app-modal-actions"><button class="app-modal-cancel" onclick="closeAppConfirmV90()">取消</button><button class="app-modal-confirm" onclick="runAppConfirmV90()">' + safeV90(confirmText || '確認') + '</button></div></section></div>';
+  };
+  window.closeAppConfirmV90 = function () { var root = document.getElementById('appModalRootV90'); if (root) root.innerHTML = ''; window.appConfirmActionV90 = null; };
+  window.runAppConfirmV90 = function () { var action = window.appConfirmActionV90; window.closeAppConfirmV90(); if (typeof action === 'function') action(); };
+
+  function setPageV90(page) { appStateV90.activePage = page; ensureChromeV90(); }
+  function loadingV90(title, note) {
+    document.getElementById('status').innerHTML = '<div class="app-card loading-state app-page"><div class="skeleton" style="width:42%;margin-left:auto;margin-right:auto"></div><div class="skeleton" style="height:28px;width:68%;margin-left:auto;margin-right:auto"></div><strong>' + safeV90(title) + '</strong><p>' + safeV90(note) + '</p></div>';
+  }
+  function apiPromiseV90(params) { return new Promise(function (resolve) { apiCall(params, function (res) { resolve(res || { ok: false, message: '伺服器沒有回傳資料' }); }); }); }
+
+  function collectTodayV90(records) {
+    var today = todayV90();
+    return (records || []).filter(function (record) { return normalizeDateV90(fieldV90(record, ['date', '日期'])) === normalizeDateV90(today); });
+  }
+  function latestByTypeV90(records, type) {
+    var matches = records.filter(function (record) { return String(fieldV90(record, ['type', '類型', '打卡類型'])) === type && !/失敗|駁回/.test(String(fieldV90(record, ['result','status','結果','狀態']))); });
+    return matches.length ? matches[matches.length - 1] : null;
+  }
+  function deriveStateV90(records) {
+    var workIn = latestByTypeV90(records, '上班打卡');
+    var workOut = latestByTypeV90(records, '下班打卡');
+    var breakStart = latestByTypeV90(records, '休息開始');
+    var breakEnd = latestByTypeV90(records, '休息結束');
+    var abnormal = records.some(function (record) { return /缺卡|異常|失敗|駁回/.test(String(fieldV90(record, ['result','status','結果','狀態']))); });
+    var state = !workIn ? 'before' : (workOut ? 'done' : (breakStart && !breakEnd ? 'break' : 'working'));
+    return { state: state, workIn: workIn, workOut: workOut, breakStart: breakStart, breakEnd: breakEnd, abnormal: abnormal };
+  }
+  function recordTimeV90(record) { return timeV90(fieldV90(record, ['time', '時間'])); }
+  function parseClockV90(record) {
+    if (!record) return null;
+    var parts = String(fieldV90(record, ['time','時間']) || '').match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+    if (!parts) return null;
+    var date = normalizeDateV90(fieldV90(record, ['date','日期']) || todayV90()).split('-');
+    return new Date(Number(date[0]), Number(date[1]) - 1, Number(date[2]), Number(parts[1]), Number(parts[2]), Number(parts[3] || 0));
+  }
+  function durationV90(start, end) {
+    var a = parseClockV90(start); var b = end ? parseClockV90(end) : new Date();
+    if (!a || !b) return '--:--';
+    if (b < a) b = new Date(b.getTime() + 86400000);
+    var minutes = Math.max(0, Math.floor((b - a) / 60000));
+    return String(Math.floor(minutes / 60)).padStart(2, '0') + ':' + String(minutes % 60).padStart(2, '0');
+  }
+  function timelineV90(records) {
+    if (!records.length) return '<div class="empty-state"><div class="state-icon">' + iconV90('records') + '</div><strong>今天還沒有紀錄</strong><p>完成打卡後，時間會依序顯示在這裡。</p></div>';
+    return '<ol class="timeline">' + records.map(function (record) {
+      var type = fieldV90(record, ['type','類型','打卡類型']) || '打卡紀錄';
+      var note = fieldV90(record, ['status','result','狀態','結果','reason','原因']) || '';
+      return '<li class="timeline-item"><span class="timeline-marker"></span><time class="timeline-time">' + safeV90(recordTimeV90(record)) + '</time><div class="timeline-copy"><strong>' + safeV90(type) + '</strong>' + (note ? '<small>' + safeV90(note) + '</small>' : '') + '</div></li>';
+    }).join('') + '</ol>';
+  }
+
+  function renderHomeV90() {
+    var employee = appStateV90.employee || {};
+    var records = collectTodayV90(appStateV90.records);
+    var shift = deriveStateV90(records);
+    var definitions = {
+      before: ['未上班','state-before','今天尚未開始班別','--:--','等待上班打卡'],
+      working: ['上班中','state-working','目前累積工時',durationV90(shift.workIn),'即時更新'],
+      break: ['休息中','state-break','已休息時間',durationV90(shift.breakStart),'休息計時中'],
+      done: ['今日已下班','state-done','今日實際工時',durationV90(shift.workIn, shift.workOut),'班別已完成']
+    };
+    var d = definitions[shift.state];
+    var role = fieldV90(employee, ['position','role','職級','職位']) || '員工';
+    var store = fieldV90(employee, ['store','allowedStores','branch','分店','可打卡分店']) || '門市未提供';
+    var actionHtml = '';
+    if (shift.abnormal) actionHtml = '<button class="primary-action" onclick="showMakeupPage()">查看異常並補卡</button>';
+    else if (shift.state === 'before') actionHtml = '<button class="primary-action" onclick="sendClock(\'上班打卡\')">上班打卡</button>';
+    else if (shift.state === 'working') actionHtml = '<button class="primary-action is-break" onclick="sendClock(\'休息開始\')">開始休息</button><button class="secondary-action" onclick="sendClock(\'下班打卡\')">下班打卡</button>';
+    else if (shift.state === 'break') actionHtml = '<button class="primary-action" onclick="sendClock(\'休息結束\')">結束休息</button>';
+    else actionHtml = '<div class="empty-state" style="padding:8px 0"><div class="state-icon">' + iconV90('check') + '</div><strong>今天的班別已完成</strong><p>可到出勤紀錄查看本月工時。</p></div>';
+    document.getElementById('status').innerHTML = '<div class="app-page"><section class="app-card"><div class="app-eyebrow">您好，' + safeV90(fieldV90(employee,['name','employeeName','姓名']) || lineDisplayName || '員工') + '</div><h1 class="app-title">今天的出勤狀態</h1><div class="employee-meta"><span class="meta-chip">' + safeV90(store) + '</span><span class="meta-chip">' + safeV90(role) + '</span></div></section><section class="app-card"><div class="status-head"><h2 class="app-title">今日出勤</h2><span class="status-chip ' + d[1] + '"><i class="status-dot"></i>' + d[0] + '</span></div><div class="metric-main"><span>' + d[2] + '</span><strong id="liveMetricV90">' + d[3] + '</strong></div><div class="metric-grid"><div class="metric-item"><span>上班時間</span><strong>' + safeV90(recordTimeV90(shift.workIn)) + '</strong></div><div class="metric-item"><span>' + (shift.state === 'break' ? '開始休息' : '休息時間') + '</span><strong>' + safeV90(shift.breakStart ? (shift.state === 'break' ? recordTimeV90(shift.breakStart) : durationV90(shift.breakStart, shift.breakEnd)) : '--:--') + '</strong></div></div></section><section class="app-card">' + actionHtml + '</section><h2 class="section-label">今日時間紀錄</h2><section class="app-card">' + timelineV90(records) + '</section>' + (shift.abnormal ? '<aside class="notice-card">' + iconV90('alert') + '<span>今天有缺卡或異常紀錄，請先查看內容並送出補卡申請。</span></aside>' : '') + '</div>';
+    document.getElementById('homeBox').classList.add('hidden');
+    document.getElementById('bindBox').classList.add('hidden');
+    if (appStateV90.timer) clearInterval(appStateV90.timer);
+    if (shift.state === 'working' || shift.state === 'break') appStateV90.timer = setInterval(function () { var metric = document.getElementById('liveMetricV90'); if (metric) metric.textContent = durationV90(shift.state === 'break' ? shift.breakStart : shift.workIn); }, 30000);
+  }
+
+  window.showAttendanceHomeV90 = async function () {
+    if (!lineUserId) { setStatus('LIFF 尚未完成登入，請稍候或重新開啟頁面。'); return; }
+    setPageV90('home'); loadingV90('正在整理今日出勤', '正在讀取員工與打卡紀錄。');
+    setButtons(false);
+    var employeeResult = await apiPromiseV90({ action: 'checkEmployee', userId: lineUserId });
+    if (!employeeResult.ok) { setButtons(true); if (/尚未綁定/.test(String(employeeResult.message || ''))) { showBindRequired('上班打卡'); } else { document.getElementById('status').innerHTML = '<div class="app-card error-state"><strong>找不到員工資料</strong><p>' + safeV90(employeeResult.message || '請聯繫主管確認員工資料與權限。') + '</p></div>'; } return; }
+    appStateV90.employee = employeeResult.employee || employeeResult.data || employeeResult;
+    var recordsResult = await apiPromiseV90({ action: 'getMonthRecords', userId: lineUserId });
+    setButtons(true);
+    if (!recordsResult.ok) { document.getElementById('status').innerHTML = '<div class="app-card error-state"><strong>出勤資料載入失敗</strong><p>' + safeV90(recordsResult.message || '請檢查網路後再試一次。') + '</p><button class="secondary-action" onclick="showAttendanceHomeV90()">重新載入</button></div>'; renderNavV90(); return; }
+    appStateV90.records = recordsResult.records || [];
+    var name = fieldV90(appStateV90.employee,['name','employeeName','姓名']) || lineDisplayName;
+    var profileName = document.getElementById('profileName'); var avatar = document.getElementById('profileAvatar');
+    if (profileName) profileName.textContent = name || '員工'; if (avatar) avatar.textContent = String(name || '員').charAt(0);
+    renderHomeV90(); renderNavV90();
+  };
+
+  window.sendClock = function (type) {
+    if (appStateV90.busy) return;
+    var execute = function () { appStateV90.busy = true; setButtons(false); originalSendClockV90.call(window, type); };
+    if (type === '下班打卡') { showAppConfirmV90('確認下班打卡', '送出後會結束今天的班別。請確認休息紀錄已完成。', '確認下班', execute); return; }
+    execute();
+  };
+
+  window.renderRecordsPage = function (mode, records) {
+    setPageV90('records'); records = Array.isArray(records) ? records : [];
+    var groups = {}; var totalHours = 0; var anomalies = 0; var pending = 0; var breakMinutes = 0;
+    records.forEach(function (record) {
+      var date = normalizeDateV90(fieldV90(record,['date','日期']) || '未提供日期');
+      if (!groups[date]) groups[date] = [];
+      groups[date].push(record);
+      var status = String(fieldV90(record,['status','result','狀態','結果']) || '');
+      if (/缺卡|異常|失敗|駁回/.test(status)) anomalies++;
+      if (/待審核|送審中/.test(status)) pending++;
+    });
+    Object.keys(groups).forEach(function (date) { var s = deriveStateV90(groups[date]); if (s.workIn && s.workOut) { var a = parseClockV90(s.workIn), b = parseClockV90(s.workOut); if (a && b) { if (b < a) b = new Date(b.getTime()+86400000); var mins = Math.max(0,(b-a)/60000); if (s.breakStart && s.breakEnd) { var ba=parseClockV90(s.breakStart), bb=parseClockV90(s.breakEnd); if (ba&&bb) { if(bb<ba) bb=new Date(bb.getTime()+86400000); var bm=Math.max(0,(bb-ba)/60000); breakMinutes+=bm; mins-=bm; } } totalHours += Math.max(0,mins)/60; } } });
+    var dates = Object.keys(groups).sort().reverse();
+    var list = dates.length ? dates.map(function (date) { var dayRecords=groups[date], s=deriveStateV90(dayRecords), day=Number(date.slice(-2)) || date, label=s.abnormal?'缺卡／異常':(s.workOut?'正常':'未完成'); var cls=s.abnormal?'state-error':(s.workOut?'state-working':'state-break'); return '<details class="record-day"><summary><div class="record-date"><strong>' + safeV90(day) + '</strong><small>' + safeV90(date.slice(0,7)) + '</small></div><div class="record-summary"><strong>' + safeV90(fieldV90(dayRecords[0],['store','分店']) || '出勤紀錄') + '</strong><small>' + safeV90(s.workIn ? recordTimeV90(s.workIn) : '--:--') + '－' + safeV90(s.workOut ? recordTimeV90(s.workOut) : '--:--') + '</small></div><span class="status-chip ' + cls + '">' + label + '</span></summary><div class="record-detail">' + timelineV90(dayRecords) + '</div></details>'; }).join('') : '<div class="app-card empty-state"><div class="state-icon">' + iconV90('records') + '</div><strong>這個月份沒有出勤紀錄</strong><p>完成第一次打卡後，紀錄會顯示在這裡。</p></div>';
+    document.getElementById('status').innerHTML = '<div class="app-page"><div class="records-tabs"><button class="' + (mode==='month'?'record-active':'record-inactive') + '" onclick="showRecordsHub(\'month\')">本月紀錄</button><button class="' + (mode==='history'?'record-active':'record-inactive') + '" onclick="showRecordsHub(\'history\')">歷史紀錄</button></div><div class="month-stats"><div class="month-stat"><span>總工時</span><strong>' + totalHours.toFixed(1) + ' 小時</strong></div><div class="month-stat"><span>出勤天數</span><strong>' + dates.length + ' 天</strong></div><div class="month-stat"><span>休息總時數</span><strong>' + (breakMinutes/60).toFixed(1) + ' 小時</strong></div><div class="month-stat"><span>異常／待審</span><strong>' + anomalies + '／' + pending + '</strong></div></div>' + list + '</div>';
+    renderNavV90();
+  };
+
+  window.showAttendanceProfileV90 = function () {
+    setPageV90('user'); var employee=appStateV90.employee||{};
+    document.getElementById('status').innerHTML='<div class="app-page"><section class="app-card"><div class="app-eyebrow">我的資料</div><h1 class="app-title">' + safeV90(fieldV90(employee,['name','姓名']) || lineDisplayName || '員工') + '</h1><div class="success-list" style="margin-top:16px">' + (typeof makeSuccessRowHtml==='function'?makeSuccessRowHtml('所屬門市',fieldV90(employee,['store','allowedStores','分店'])||'-')+makeSuccessRowHtml('職級',fieldV90(employee,['position','role','職級'])||'員工'):'') + '</div><button class="secondary-action" onclick="showRecordsHub(\'month\')">查看出勤紀錄</button></section></div>'; renderNavV90();
+  };
+
+  window.showMakeupPage = function () { setPageV90('edit'); originalShowMakeupPageV90.apply(window, arguments); };
+  if (typeof originalShowPendingReviewPageV90 === 'function') window.showPendingReviewPageV55 = function () { setPageV90('review'); originalShowPendingReviewPageV90.apply(window, arguments); };
+  window.handleRoute = function () { var action = getUrlParam('action'); ensureChromeV90(); if (!action) { window.showAttendanceHomeV90(); return; } originalHandleRouteV90.apply(window, arguments); };
+
+  var originalShowClockSuccessV90 = window.showClockSuccess;
+  window.showClockSuccess = function (res, type) { appStateV90.busy=false; if (typeof originalShowClockSuccessV90==='function') originalShowClockSuccessV90.apply(window, arguments); setTimeout(function () { window.showAttendanceHomeV90(); }, 900); };
+  var originalSetStatusV90 = window.setStatus;
+  window.setStatus = function (text) { if (/失敗|逾時|拒絕|無法|重複/.test(String(text||''))) appStateV90.busy=false; return originalSetStatusV90.apply(window, arguments); };
+  ensureChromeV90();
 })();
 </script>
 
