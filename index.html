@@ -5486,9 +5486,7 @@ setTimeout(function () {
         '<input id="makeupDate" type="date" value="' + escapeHtml(today.replace(/\//g, '-')) + '">' +
         '<div class="mini-title">分店</div>' +
         '<select id="makeupStore" class="makeup-center-select-v591">' +
-          '<option value="瑞豐店">瑞豐店</option>' +
-          '<option value="六合店">六合店</option>' +
-          '<option value="新堀江店">新堀江店</option>' +
+          window.buildEmployeeMakeupStoreOptionsV86(employee) +
         '</select>' +
         '<div class="mini-title">補卡類型</div>' +
         '<select id="makeupType" class="makeup-center-select-v591">' +
@@ -7659,6 +7657,73 @@ setTimeout(function () {
 })();
 </script>
 
+
+
+<!-- =====================================================
+前端 V86：補卡分店依員工「可打卡分店」權限動態顯示
+員工資料 D 欄 allowedStores：
+- 單一分店：只顯示該分店
+- 多分店：只顯示設定中的分店
+- 全部：顯示系統全部分店
+===================================================== -->
+<script>
+(function () {
+  const ALL_MAKEUP_STORES_V86 = ['瑞豐店', '六合店', '新堀江店'];
+
+  function normalizeMakeupStoreNameV86(value) {
+    const text = String(value || '').trim().replace(/\s+/g, '');
+
+    const map = {
+      '瑞豐': '瑞豐店',
+      '瑞豐店': '瑞豐店',
+      '六合': '六合店',
+      '六合店': '六合店',
+      '新堀江': '新堀江店',
+      '新堀江店': '新堀江店'
+    };
+
+    return map[text] || '';
+  }
+
+  window.getEmployeeMakeupStoresV86 = function (employee) {
+    const allowedText = String(employee && employee.allowedStores || '').trim();
+
+    // 後端原本空白會視為「全部」，前端也保留相同保險。
+    if (!allowedText || allowedText.indexOf('全部') !== -1) {
+      return ALL_MAKEUP_STORES_V86.slice();
+    }
+
+    const stores = allowedText
+      .split(/[,，、\/|;；\n]+/)
+      .map(normalizeMakeupStoreNameV86)
+      .filter(function (store, index, list) {
+        return store &&
+          ALL_MAKEUP_STORES_V86.indexOf(store) !== -1 &&
+          list.indexOf(store) === index;
+      });
+
+    // 員工資料格式異常時，不讓補卡頁面變成完全沒有選項。
+    return stores.length > 0 ? stores : ALL_MAKEUP_STORES_V86.slice();
+  };
+
+  window.buildEmployeeMakeupStoreOptionsV86 = function (employee) {
+    return window.getEmployeeMakeupStoresV86(employee)
+      .map(function (store) {
+        return '<option value="' + escapeHtml(store) + '">' + escapeHtml(store) + '</option>';
+      })
+      .join('');
+  };
+
+  setTimeout(function () {
+    try {
+      const footer = document.querySelector('.footer');
+      if (footer) {
+        footer.innerText = 'LIFF ID：2010226307-AZeYYFbb｜前端 V86 補卡分店權限版';
+      }
+    } catch (err) {}
+  }, 1700);
+})();
+</script>
 
 <!-- V85：未打卡提醒新增「前往補卡」快捷按鈕 -->
 </body>
