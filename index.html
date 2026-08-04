@@ -870,6 +870,7 @@ textarea {
     const LIFF_ID = '2010226307-AZeYYFbb';
 
     const API_URL = 'https://script.google.com/macros/s/AKfycbyMjNZ6Tzl7cm6v43JYrbI5UCnQcwdqMG9bfJ3sv5HDkgKPe6yDnF1khfJu4asbrFjc/exec';
+    const FRONTEND_CONNECTION_PATCH_V84 = 'V84_FRONTEND_ONLY_STABLE_CONNECTION';
 
     let lineUserId = '';
     let lineDisplayName = '';
@@ -1116,8 +1117,8 @@ textarea {
         },
         {
           enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 0
+          timeout: 25000,
+          maximumAge: 30000
         }
       );
     }
@@ -1540,53 +1541,170 @@ const workDays = workDaySet.size;
       return String(num).padStart(2, '0');
     }
 
-    function apiCall(params, callback) {
-      const cbName = 'jsonpCallback_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+    // V84：僅修改前端連線策略，不需要更動 GAS 或 Google 試算表。
+    // 讀取類 API 暫時失敗時自動重試 1 次；打卡、補卡、審核等寫入類 API 絕不自動重送。
+    function apiCall(params, callback, options) {
+      const baseParams = Object.assign({}, params || {});
+      const action = String(baseParams.action || '').trim();
+      const config = options || {};
 
-      params.callback = cbName;
-      params._t = Date.now();
-
-      const query = Object.keys(params)
-        .map(function (key) {
-          return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
-        })
-        .join('&');
-
-      const script = document.createElement('script');
-      script.src = API_URL + '?' + query;
-
-      let timer = setTimeout(function () {
-        cleanup();
-        setButtons(true);
-        setStatus('連線逾時，請檢查網路或 Apps Script 部署權限');
-      }, 15000);
-
-      window[cbName] = function (res) {
-        cleanup();
-        callback(res);
+      // 只有明確屬於「查詢」的 action 才能安全重試。
+      const retryableActions = {
+        versionCheck: true,
+        checkEmployee: true,
+        getToday: true,
+        getMonthRecords: true,
+        getHistoryRecords: true,
+        checkMissingClockRecords: true,
+        checkMissingPunchRecords: true,
+        getMissingClockNotice: true,
+        checkPendingReviewAccess: true,
+        getPendingMakeupRequests: true,
+        getSupervisorMakeupRequests: true,
+        getMakeupApprovalRequests: true,
+        checkAdminProxyAccess: true,
+        getAdminProxyEmployees: true,
+        getAdminProxyEmployeeList: true,
+        getMyPendingMakeupRequests: true,
+        getMyPendingMakeupRequestsV59: true,
+        getEmployeeAchievements: true,
+        getEmployeeAchievementsV60: true
       };
 
-      script.onerror = function () {
-        cleanup();
-        setButtons(true);
-        setStatus(
-          '無法連接 Google Apps Script API\n\n' +
-          '目前連線網址：\n' +
-          script.src + '\n\n' +
-          '請確認 GitHub Pages 是否已更新到新版'
-        );
-      };
+      const maxAttempts = Number(
+        config.maxAttempts || (retryableActions[action] ? 2 : 1)
+      );
 
-      function cleanup() {
-        clearTimeout(timer);
-        delete window[cbName];
+      // 一般查詢等待 30 秒；正式打卡等待 40 秒。
+      const timeoutMs = Number(
+        config.timeoutMs ||
+        (action === 'clockIn' || action === 'adminProxyClockIn' ? 40000 : 30000)
+      );
 
-        if (script.parentNode) {
-          script.parentNode.removeChild(script);
+      let attempt = 0;
+      let requestFinished = false;
+
+      function startAttempt() {
+        if (requestFinished) return;
+
+        attempt += 1;
+
+        const cbName =
+          'jsonpCallback_' +
+          Date.now() + '_' +
+          attempt + '_' +
+          Math.floor(Math.random() * 100000);
+
+        const requestParams = Object.assign({}, baseParams, {
+          callback: cbName,
+          _t: Date.now(),
+          attempt: attempt
+        });
+
+        const query = Object.keys(requestParams)
+          .map(function (key) {
+            return encodeURIComponent(key) + '=' + encodeURIComponent(requestParams[key]);
+          })
+          .join('&');
+
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = API_URL + '?' + query;
+
+        let settled = false;
+
+        const timer = setTimeout(function () {
+          finishAttempt('timeout');
+        }, timeoutMs);
+
+        window[cbName] = function (res) {
+          if (settled || requestFinished) return;
+
+          settled = true;
+          cleanup(false);
+          requestFinished = true;
+          callback(res || {});
+        };
+
+        script.onerror = function () {
+          finishAttempt('network');
+        };
+
+        function finishAttempt(reason) {
+          if (settled || requestFinished) return;
+
+          settled = true;
+          cleanup(true);
+
+          if (attempt < maxAttempts) {
+            setStatus(
+              '系統連線較慢，正在自動重新連線...\n' +
+              '請稍候，不需要重複按打卡。'
+            );
+
+            setTimeout(startAttempt, 1000);
+            return;
+          }
+
+          requestFinished = true;
+          setButtons(true);
+
+          if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+            setStatus(
+              '目前手機網路已斷線。\n\n' +
+              '請確認 4G / Wi-Fi 後再重新操作。'
+            );
+            return;
+          }
+
+          if (reason === 'timeout') {
+            setStatus(
+              '系統回應逾時。\n\n' +
+              '請先等待 3 秒，再重新操作一次。\n' +
+              '請勿連續重複點擊，避免重複送出。'
+            );
+          } else {
+            setStatus(
+              'Google Apps Script 暫時無法連線。\n\n' +
+              (retryableActions[action]
+                ? '系統已自動重試一次，請稍候再操作。'
+                : '本次操作不會自動重送，請稍候再確認紀錄。')
+            );
+          }
         }
+
+        function cleanup(keepNoopCallback) {
+          clearTimeout(timer);
+
+          // 避免逾時後，較晚回來的 JSONP 回應呼叫到不存在的函式。
+          if (keepNoopCallback) {
+            window[cbName] = function () {};
+            setTimeout(function () {
+              try {
+                delete window[cbName];
+              } catch (e) {
+                window[cbName] = undefined;
+              }
+            }, 60000);
+          } else {
+            try {
+              delete window[cbName];
+            } catch (e) {
+              window[cbName] = undefined;
+            }
+          }
+
+          script.onerror = null;
+
+          if (script.parentNode) {
+            script.parentNode.removeChild(script);
+          }
+        }
+
+        document.body.appendChild(script);
       }
 
-      document.body.appendChild(script);
+      startAttempt();
     }
 
 
