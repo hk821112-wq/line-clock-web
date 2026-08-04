@@ -5550,7 +5550,16 @@ setTimeout(function () {
   }
 
   function getMissingClockWarningHtmlV62() {
-    return '<div class="missing-clock-warning-v62">' + escapeHtml(MISSING_CLOCK_WARNING_TEXT_V62) + '</div>';
+    return (
+      '<div class="missing-clock-warning-v62">' +
+        '<div class="missing-clock-warning-content-v85">' +
+          escapeHtml(MISSING_CLOCK_WARNING_TEXT_V62) +
+        '</div>' +
+        '<div class="missing-clock-warning-actions-v85">' +
+          '<button type="button" class="missing-clock-makeup-button-v85" onclick="showMakeupPage()">前往補卡</button>' +
+        '</div>' +
+      '</div>'
+    );
   }
 
   function prependMissingClockWarningV62() {
@@ -5707,6 +5716,39 @@ setTimeout(function () {
 .missing-clock-warning-v70 {
   white-space: pre-line !important;
 }
+
+/* V85：未打卡提醒內的小型快捷補卡按鈕 */
+.missing-clock-warning-content-v85 {
+  white-space: pre-line;
+}
+
+.missing-clock-warning-actions-v85 {
+  display: flex;
+  justify-content: center;
+  margin-top: 9px;
+  white-space: normal;
+}
+
+.missing-clock-makeup-button-v85 {
+  width: auto !important;
+  min-width: 104px;
+  margin: 0 !important;
+  padding: 8px 16px !important;
+  border: 1px solid rgba(156, 49, 56, 0.32) !important;
+  border-radius: 999px !important;
+  background: #ffffff !important;
+  color: #9c3138 !important;
+  box-shadow: 0 4px 12px rgba(156, 49, 56, 0.08) !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.3px;
+}
+
+.missing-clock-makeup-button-v85:active {
+  transform: scale(0.97);
+  background: #ffe6e8 !important;
+}
 </style>
 
 <script>
@@ -5861,7 +5903,12 @@ setTimeout(function () {
     statusBox.insertAdjacentHTML(
       'afterbegin',
       '<div class="missing-clock-warning-v62 missing-clock-warning-v70">' +
-        escapeMissingClockHtmlV70(text) +
+        '<div class="missing-clock-warning-content-v85">' +
+          escapeMissingClockHtmlV70(text) +
+        '</div>' +
+        '<div class="missing-clock-warning-actions-v85">' +
+          '<button type="button" class="missing-clock-makeup-button-v85" onclick="showMakeupPage()">前往補卡</button>' +
+        '</div>' +
       '</div>'
     );
   }
@@ -7612,5 +7659,7 @@ setTimeout(function () {
 })();
 </script>
 
+
+<!-- V85：未打卡提醒新增「前往補卡」快捷按鈕 -->
 </body>
 </html>
